@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Picky</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍽️ Picky</h1>
+            <div class="user-info">
+                <span id="userDisplay">Local User</span>
+            </div>
+        </header>
+
+        <main>
+            <div class="week-selector">
+                <button id="prevWeek" class="btn btn-outline">← Previous</button>
+                <div class="week-info">
+                    <button id="thisWeekBtn" class="btn btn-secondary">Go to this week</button>
+                    <h2 id="currentWeek"></h2>
+                </div>
+                <button id="nextWeek" class="btn btn-outline">Next →</button>
+            </div>
+
+            <div class="meal-grid">
+                <table id="mealTable">
+                    <thead>
+                        <tr>
+                            <th>Jeet?</th>
+                            <th>Monday</th>
+                            <th>Tuesday</th>
+                            <th>Wednesday</th>
+                            <th>Thursday</th>
+                            <th>Friday</th>
+                            <th>Saturday</th>
+                            <th>Sunday</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mealTableBody">
+                        <!-- Dynamic content -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="actions">
+                <button id="addPersonBtn" class="btn btn-primary">Add Person</button>
+                <button id="loadBtn" class="btn btn-outline">Reload Data</button>
+            </div>
+
+            <div class="status" id="statusMessage"></div>
+        </main>
+    </div>
+
+    <!-- Grocery List Section -->
+    <div class="grocery-section">
+        <h2>Grocery List</h2>
+        <div class="grocery-controls">
+            <button id="addGroceryItem" class="btn">Add Item</button>
+            <button id="clearCompleted" class="btn">Clear Completed</button>
+        </div>
+        <table class="grocery-table">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>County Market</th>
+                    <th>Sam's Club</th>
+                    <th>For Meals</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="groceryTableBody">
+                <!-- Grocery items will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
