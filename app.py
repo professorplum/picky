@@ -21,7 +21,7 @@ def static_files(filename):
 
 @app.route('/api/health', methods=['GET'])
 def health():
-    return jsonify({"status": "OK", "message": "Picky API is running"})
+    return jsonify({"status": "OK", "message": "Picky API is running"}, env=app.config("ENV_NAME"))
 
 @app.route('/api/meals/<user_id>', methods=['GET'])
 def get_user_meals(user_id):

@@ -1,5 +1,6 @@
 # Virtual Environment
 venv/
+.venv/
 env/
 ENV/
 
@@ -41,8 +42,10 @@ Thumbs.db
 
 # Environment variables
 .env
+*.env
 .env.local
 .env.*.local
 
 # Logs
 *.log
+picky-staging.zip
