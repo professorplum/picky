@@ -1,7 +1,7 @@
 // Global variables
 // Auto-detect port from current URL, fallback to 5001
 const currentPort = window.location.port || '5001';
-const API_BASE = `http://localhost:${currentPort}/api`;
+const API_BASE = `${window.location.origin}/api`;
 let currentUser = 'local-user'; // For local development
 let currentWeek = getCurrentWeek();
 let mealData = {};
