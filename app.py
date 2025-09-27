@@ -14,14 +14,18 @@ def index():
     """Serve the main HTML page"""
     return send_from_directory('.', 'index.html')
 
-@app.route('/<path:filename>')
+@app.route('/static/<path:filename>')
 def static_files(filename):
-    """Serve static files (CSS, JS, etc.)"""
-    return send_from_directory('.', filename)
+    """Serve static files (CSS, JS, etc.) from static/ directory"""
+    return send_from_directory('static', filename)
 
 @app.route('/api/health', methods=['GET'])
 def health():
-    return jsonify({"status": "OK", "message": "Picky API is running"}, env=app.config("ENV_NAME"))
+    return jsonify({
+        "status": "OK",
+        "message": "Picky API is running",
+        "env": app.config.get("ENV_NAME")
+    })
 
 @app.route('/api/meals/<user_id>', methods=['GET'])
 def get_user_meals(user_id):
@@ -83,17 +87,17 @@ def save_grocery_items():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-def run_server(port=5001, debug=True):
-    """Run the Flask server with specified port"""
+def run_server(port=None, debug=True):
     # Create data directory if it doesn't exist
     os.makedirs('data', exist_ok=True)
-    
     print("🍽️  Starting Picky...")
     print("📁 Data will be stored in ./data/ directory")
     print(f"🌐 Server running at http://localhost:{port}")
     print(f"📊 API available at http://localhost:{port}/api/health")
-    
     app.run(debug=debug, host='0.0.0.0', port=port)
 
-if __name__ == '__main__':
-    run_server()
+
+if __name__ == "__main__":
+    # Always use PORT env var if set, default to 8000 for Azure compatibility
+    port = int(os.environ.get("PORT", 8000))
+    run_server(port=port, debug=False)
