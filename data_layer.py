@@ -44,30 +44,7 @@ class DataLayer:
             print(f"Error writing {file_path}: {e}")
             return False
     
-    def get_user_meals(self, user_id: str) -> Dict[str, Any]:
-        """Get meal data for a specific user"""
-        data = self._read_json_file("meals")
-        return data.get(user_id, self._get_default_week_structure())
-    
-    def save_user_meals(self, user_id: str, meal_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Save meal data for a user"""
-        data = self._read_json_file("meals")
-        
-        # Add metadata
-        meal_data["lastUpdated"] = datetime.utcnow().isoformat()
-        meal_data["userId"] = user_id
-        
-        data[user_id] = meal_data
-        
-        if self._write_json_file("meals", data):
-            return {"success": True, "message": "Meal data saved successfully"}
-        else:
-            return {"success": False, "message": "Failed to save meal data"}
-    
-    def update_user_meals(self, user_id: str, meal_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Update meal data for a user (same as save for now)"""
-        return self.save_user_meals(user_id, meal_data)
-    
+    # Meal planner methods removed
     def get_persons(self) -> List[str]:
         """Get list of persons"""
         data = self._read_json_file("persons")

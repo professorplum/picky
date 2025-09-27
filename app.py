@@ -32,31 +32,7 @@ def health():
         "env": app.config.get("ENV_NAME")
     })
 
-@app.route('/api/meals/<user_id>', methods=['GET'])
-def get_user_meals(user_id):
-    try:
-        meals = data_layer.get_user_meals(user_id)
-        return jsonify(meals)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/meals/<user_id>', methods=['POST'])
-def save_user_meals(user_id):
-    try:
-        data = request.get_json()
-        result = data_layer.save_user_meals(user_id, data)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/meals/<user_id>', methods=['PUT'])
-def update_user_meals(user_id):
-    try:
-        data = request.get_json()
-        result = data_layer.update_user_meals(user_id, data)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+# Meal planner endpoints removed
 
 @app.route('/api/persons', methods=['GET'])
 def get_persons():

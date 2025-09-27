@@ -287,21 +287,15 @@ td {
 }
 
 .grocery-table th:first-child {
-    width: 40%;
+    width: 50%;
 }
-
 .grocery-table th:nth-child(2),
 .grocery-table th:nth-child(3) {
-    width: 15%;
+    width: 25%;
     text-align: center;
 }
-
-.grocery-table th:nth-child(4) {
-    width: 25%;
-}
-
 .grocery-table th:last-child {
-    width: 5%;
+    width: 25%;
     text-align: center;
 }
 
@@ -326,6 +320,11 @@ td {
     border-radius: 4px;
     font-size: 14px;
     background: white;
+    resize: none;
+    min-height: 1.5em;
+    max-height: 3em;
+    line-height: 1.5;
+    overflow-y: auto;
 }
 
 .grocery-item-input:focus {

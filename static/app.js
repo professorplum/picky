@@ -1,88 +1,27 @@
-// Global variables
-// Auto-detect port from current URL, fallback to 5001
-const currentPort = window.location.port || '5001';
+// Grocery List Only Version
 const API_BASE = `${window.location.origin}/api`;
-let currentUser = 'local-user'; // For local development
-let currentWeek = getCurrentWeek();
-let mealData = {};
-let persons = [];
-let lastSavedData = {}; // Track what was last saved to avoid unnecessary API calls
 let groceryItems = [];
 
-// Initialize app
 document.addEventListener('DOMContentLoaded', function() {
-    initializeApp();
+    showStatus('Loading grocery list...', 'info');
+    setupGroceryEventListeners();
+    loadGroceryItems();
 });
 
-// Add this function near the top of app.js, before initializeApp
 function showStatus(message, type = 'info') {
-    const statusDiv = document.getElementById('status');  // Assumes <div id="status"></div> in index.html
+    const statusDiv = document.getElementById('status');
     if (statusDiv) {
         statusDiv.textContent = message;
-        statusDiv.className = `status ${type}`;  // Optional: Add CSS classes for styling (e.g., .status.error { color: red; })
+        statusDiv.className = `status ${type}`;
     } else {
-        console.log(`Status: ${message}`);  // Fallback to console if no status div
+        console.log(`Status: ${message}`);
     }
 }
 
-async function initializeApp() {
-    try {
-        showStatus('Loading meal planner...', 'info');
-        setupEventListeners();
-        updateWeekDisplay();
-        
-        // Load persons first (this will render the table with empty meal data)
-        await loadPersons();
-        
-        // Then load meal data (this will re-render with actual data)
-        await loadMealData();
-        await loadGroceryItems();
-        
-        showStatus('Ready!', 'success');
-    } catch (error) {
-        console.error('Failed to initialize app:', error);
-        showStatus('Failed to load app. Check if server is running.', 'error');
-    }
-}
-
-// Event listeners
-function setupEventListeners() {
-    document.getElementById('prevWeek').addEventListener('click', () => {
-        currentWeek = getPreviousWeek(currentWeek);
-        updateWeekDisplay();
-        loadMealData();
-    });
-    
-    document.getElementById('nextWeek').addEventListener('click', () => {
-        currentWeek = getNextWeek(currentWeek);
-        updateWeekDisplay();
-        loadMealData();
-    });
-    
-    document.getElementById('thisWeekBtn').addEventListener('click', () => {
-        currentWeek = getCurrentWeek();
-        updateWeekDisplay();
-        loadMealData();
-    });
-    
-    document.getElementById('addPersonBtn').addEventListener('click', addPerson);
-    document.getElementById('loadBtn').addEventListener('click', async () => {
-        try {
-            showStatus('Reloading data...', 'info');
-            await Promise.all([loadMealData(), loadPersons(), loadGroceryItems()]);
-            showStatus('Data reloaded successfully!', 'success');
-        } catch (error) {
-            console.error('Failed to reload data:', error);
-            showStatus('Failed to reload data', 'error');
-        }
-    });
-    
-    // Grocery list event listeners
+function setupGroceryEventListeners() {
     document.getElementById('addGroceryItem').addEventListener('click', addGroceryItem);
     document.getElementById('clearCompleted').addEventListener('click', clearCompletedItems);
 }
-
-// Week management
 function getCurrentWeek() {
     const now = new Date();
     const year = now.getFullYear();
@@ -484,7 +423,7 @@ async function addPerson() {
     }
 }
 
-// Grocery List Management
+// --- Grocery List Management ---
 async function loadGroceryItems() {
     try {
         const response = await fetch(`${API_BASE}/grocery-items`);
@@ -494,10 +433,12 @@ async function loadGroceryItems() {
             groceryItems = [];
         }
         renderGroceryTable();
+        showStatus('Ready!', 'success');
     } catch (error) {
         console.error('Failed to load grocery items:', error);
         groceryItems = [];
         renderGroceryTable();
+        showStatus('Failed to load grocery items', 'error');
     }
 }
 
@@ -510,7 +451,6 @@ async function saveGroceryItems() {
             },
             body: JSON.stringify(groceryItems)
         });
-        
         if (!response.ok) {
             throw new Error('Failed to save grocery items');
         }
@@ -523,19 +463,26 @@ async function saveGroceryItems() {
 function renderGroceryTable() {
     const tbody = document.getElementById('groceryTableBody');
     if (!tbody) return;
-    
-    if (groceryItems.length === 0) {
+
+    // Sort: unchecked first, checked last
+    const sortedItems = [...groceryItems].sort((a, b) => {
+        if (a.checked && !b.checked) return 1;
+        if (!a.checked && b.checked) return -1;
+        return 0;
+    });
+
+    if (sortedItems.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="5" class="empty-state">
+                <td colspan="2" class="empty-state">
                     No grocery items yet. Click "Add Item" to get started!
                 </td>
             </tr>
         `;
         return;
     }
-    
-    tbody.innerHTML = groceryItems.map((item, index) => `
+
+    tbody.innerHTML = sortedItems.map((item, index) => `
         <tr>
             <td>
                 <input type="text" 
@@ -547,43 +494,30 @@ function renderGroceryTable() {
             <td style="text-align: center;">
                 <input type="checkbox" 
                        class="grocery-checkbox" 
-                       ${item.countyMarket ? 'checked' : ''} 
+                       ${item.checked ? 'checked' : ''} 
                        data-index="${index}" 
-                       data-field="countyMarket">
-            </td>
-            <td style="text-align: center;">
-                <input type="checkbox" 
-                       class="grocery-checkbox" 
-                       ${item.samsClub ? 'checked' : ''} 
-                       data-index="${index}" 
-                       data-field="samsClub">
-            </td>
-            <td>
-                <textarea class="grocery-meals-input" 
-                          data-index="${index}" 
-                          data-field="forMeals" 
-                          placeholder="Enter meals...">${escapeHtml(item.forMeals || '')}</textarea>
-            </td>
-            <td style="text-align: center;">
-                <button class="grocery-delete-btn" onclick="deleteGroceryItem(${index})">Delete</button>
+                       data-field="checked">
             </td>
         </tr>
     `).join('');
-    
+
     // Add event listeners to inputs
-    tbody.querySelectorAll('.grocery-item-input, .grocery-meals-input').forEach(input => {
+    tbody.querySelectorAll('.grocery-item-input').forEach(input => {
         input.addEventListener('blur', saveGroceryData);
         input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+            if (e.key === 'Enter') {
                 e.preventDefault();
                 saveGroceryData();
                 input.blur();
             }
         });
     });
-    
+
     tbody.querySelectorAll('.grocery-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', saveGroceryData);
+        checkbox.addEventListener('change', (e) => {
+            saveGroceryData(e);
+            renderGroceryTable(); // Re-sort after checking
+        });
     });
 }
 
@@ -597,30 +531,16 @@ async function addGroceryItem() {
     const newItem = {
         id: Date.now(),
         name: '',
-        countyMarket: false,
-        samsClub: false,
-        forMeals: ''
+        checked: false
     };
-    
     groceryItems.push(newItem);
     renderGroceryTable();
-    
     // Focus on the new item's name input
     const newInput = document.querySelector(`[data-index="${groceryItems.length - 1}"][data-field="name"]`);
     if (newInput) {
         newInput.focus();
     }
-    
     await saveGroceryItems();
-}
-
-async function deleteGroceryItem(index) {
-    if (confirm('Are you sure you want to delete this item?')) {
-        groceryItems.splice(index, 1);
-        renderGroceryTable();
-        await saveGroceryItems();
-        showStatus('Item deleted', 'success');
-    }
 }
 
 async function saveGroceryData(event) {
@@ -628,29 +548,24 @@ async function saveGroceryData(event) {
         const index = parseInt(event.target.dataset.index);
         const field = event.target.dataset.field;
         let value;
-        
         if (event.target.type === 'checkbox') {
             value = event.target.checked;
         } else {
             value = event.target.value;
         }
-        
         groceryItems[index][field] = value;
     }
-    
     await saveGroceryItems();
 }
 
 async function clearCompletedItems() {
-    const completedItems = groceryItems.filter(item => item.countyMarket && item.samsClub);
-    
+    const completedItems = groceryItems.filter(item => item.checked);
     if (completedItems.length === 0) {
         showStatus('No completed items to clear', 'info');
         return;
     }
-    
     if (confirm(`Clear ${completedItems.length} completed item(s)?`)) {
-        groceryItems = groceryItems.filter(item => !(item.countyMarket && item.samsClub));
+        groceryItems = groceryItems.filter(item => !item.checked);
         renderGroceryTable();
         await saveGroceryItems();
         showStatus(`Cleared ${completedItems.length} completed item(s)`, 'success');
