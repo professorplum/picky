@@ -1,5 +1,5 @@
 #!/bin/bash
-# Activation script for Picky Meal Planner
+# Activation script for Picky Meal Planner (Unix/Linux/macOS and Git-Bash on Windows)
 
 echo "🍽️  Activating Picky Meal Planner environment..."
 source venv/bin/activate
