@@ -39,8 +39,13 @@ def main():
         Timer(2.0, lambda: webbrowser.open(f'http://localhost:{port}')).start()
 
     # Start Flask app
-    from app import run_server
-    run_server(port=port)
+    try:
+        from app import run_server
+        run_server(port=port, debug=False)
+    except Exception as e:
+        print(f"Error starting server: {e}")
+        if not args.no_browser:
+            print("Browser opening cancelled due to server error.")
 
 if __name__ == '__main__':
     main()
