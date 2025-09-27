@@ -21,8 +21,8 @@ def static_files(filename):
 
 @app.route('/favicon.ico')
 def favicon():
-    """Serve favicon from static/ directory"""
-    return send_from_directory('static', 'favicon.ico')
+    """Serve favicon from root directory"""
+    return send_from_directory('.', 'favicon.ico')
 
 @app.route('/api/health', methods=['GET'])
 def health():
