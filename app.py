@@ -19,6 +19,11 @@ def static_files(filename):
     """Serve static files (CSS, JS, etc.) from static/ directory"""
     return send_from_directory('static', filename)
 
+@app.route('/favicon.ico')
+def favicon():
+    """Serve favicon from static/ directory"""
+    return send_from_directory('static', 'favicon.ico')
+
 @app.route('/api/health', methods=['GET'])
 def health():
     return jsonify({

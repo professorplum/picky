@@ -14,6 +14,17 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
 });
 
+// Add this function near the top of app.js, before initializeApp
+function showStatus(message, type = 'info') {
+    const statusDiv = document.getElementById('status');  // Assumes <div id="status"></div> in index.html
+    if (statusDiv) {
+        statusDiv.textContent = message;
+        statusDiv.className = `status ${type}`;  // Optional: Add CSS classes for styling (e.g., .status.error { color: red; })
+    } else {
+        console.log(`Status: ${message}`);  // Fallback to console if no status div
+    }
+}
+
 async function initializeApp() {
     try {
         showStatus('Loading meal planner...', 'info');
