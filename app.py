@@ -110,26 +110,6 @@ def add_meal_item():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# === Grocery Items ===
-@app.route('/api/grocery-items', methods=['GET'])
-def get_grocery_items():
-    try:
-        items = data_layer.get_grocery_items()
-        return jsonify(items)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/grocery-items', methods=['POST'])
-def save_grocery_items():
-    try:
-        items_data = request.get_json()
-        # Validate that it's a list
-        if not isinstance(items_data, list):
-            return jsonify({"error": "Expected a list of grocery items"}), 400
-        result = data_layer.save_grocery_items(items_data)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 def run_server(port=None, debug=True):
     # Create data directory if it doesn't exist

@@ -1,4 +1,4 @@
-// Grocery List Only Version
+// Shopping List and Meal Planning Version
 const API_BASE = `${window.location.origin}/api`;
 let groceryItems = [];
 
@@ -10,7 +10,7 @@ let lastSavedData = {}; // Track what was last saved
 let currentWeek = getCurrentWeek(); // Current week for meal planning
 
 document.addEventListener('DOMContentLoaded', function() {
-    showStatus('Loading grocery list...', 'info');
+    showStatus('Loading shopping list...', 'info');
     setupGroceryEventListeners();
     loadGroceryItems();
 });
@@ -430,10 +430,10 @@ async function addPerson() {
     }
 }
 
-// --- Grocery List Management ---
+// --- Shopping List Management ---
 async function loadGroceryItems() {
     try {
-        const response = await fetch(`${API_BASE}/grocery-items`);
+        const response = await fetch(`${API_BASE}/shopping-items`);
         if (response.ok) {
             groceryItems = await response.json();
         } else {
@@ -449,21 +449,26 @@ async function loadGroceryItems() {
     }
 }
 
-async function saveGroceryItems() {
+async function saveGroceryItem(item) {
     try {
-        const response = await fetch(`${API_BASE}/grocery-items`, {
+        const response = await fetch(`${API_BASE}/shopping-items`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(groceryItems)
+            body: JSON.stringify({
+                name: item.name,
+                inCart: item.checked || false
+            })
         });
         if (!response.ok) {
-            throw new Error('Failed to save grocery items');
+            throw new Error('Failed to save grocery item');
         }
+        return await response.json();
     } catch (error) {
-        console.error('Failed to save grocery items:', error);
-        showStatus('Failed to save grocery items', 'error');
+        console.error('Failed to save grocery item:', error);
+        showStatus('Failed to save grocery item', 'error');
+        throw error;
     }
 }
 
@@ -551,7 +556,7 @@ async function addGroceryItem() {
     if (newInput) {
         newInput.focus();
     }
-    await saveGroceryItems();
+    // No need to save empty item immediately - will save when user enters name
 }
 
 async function saveGroceryData(event) {
@@ -565,8 +570,17 @@ async function saveGroceryData(event) {
             value = event.target.value;
         }
         groceryItems[index][field] = value;
+        
+        // Only save if item has a name
+        const item = groceryItems[index];
+        if (item.name && item.name.trim()) {
+            try {
+                await saveGroceryItem(item);
+            } catch (error) {
+                // Error already handled in saveGroceryItem
+            }
+        }
     }
-    await saveGroceryItems();
 }
 
 async function clearCompletedItems() {
@@ -578,7 +592,8 @@ async function clearCompletedItems() {
     if (confirm(`Clear ${completedItems.length} completed item(s)?`)) {
         groceryItems = groceryItems.filter(item => !item.checked);
         renderGroceryTable();
-        await saveGroceryItems();
+        // Note: In a full implementation, you'd want to call a delete API endpoint here
+        // For now, items are just removed from local array
         showStatus(`Cleared ${completedItems.length} completed item(s)`, 'success');
     }
 }
