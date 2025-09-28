@@ -1,84 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Picky</title>
-    <link rel="stylesheet" href="/static/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Picky</title>
+  <link rel="stylesheet" href="/static/styles.css">
 </head>
+
 <body>
-    <div class="container">
-        <header>
-            <h1>🍽️ Picky</h1>
-            <div class="user-info">
-                <span id="userDisplay">Local User</span>
-            </div>
-        </header>
+  <div class="container">
+    <header>
+      <h1>🍽️ Picky</h1>
+      <div class="user-info">
+        <span id="userDisplay">Local User</span>
+      </div>
+    </header>
 
-        <main>
-            <div class="week-selector">
-                <button id="prevWeek" class="btn btn-outline">← Previous</button>
-                <div class="week-info">
-                    <button id="thisWeekBtn" class="btn btn-secondary">Go to this week</button>
-                    <h2 id="currentWeek"></h2>
-                </div>
-                <button id="nextWeek" class="btn btn-outline">Next →</button>
-            </div>
-
-            <div class="meal-grid">
-                <table id="mealTable">
-                    <thead>
-                        <tr>
-                            <th>Jeet?</th>
-                            <th>Monday</th>
-                            <th>Tuesday</th>
-                            <th>Wednesday</th>
-                            <th>Thursday</th>
-                            <th>Friday</th>
-                            <th>Saturday</th>
-                            <th>Sunday</th>
-                        </tr>
-                    </thead>
-                    <tbody id="mealTableBody">
-                        <!-- Dynamic content -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="actions">
-                <button id="addPersonBtn" class="btn btn-primary">Add Person</button>
-                <button id="loadBtn" class="btn btn-outline">Reload Data</button>
-            </div>
-
-            <div class="status" id="status"></div>
-        </main>
-            <!-- Grocery List Section -->
-    <div class="grocery-section">
-        <h2>Grocery List</h2>
-        <div class="grocery-controls">
-            <button id="addGroceryItem" class="btn">Add Item</button>
-            <button id="clearCompleted" class="btn">Clear Completed</button>
-        </div>
-        <table class="grocery-table">
+    <main class="dashboard">
+      <!-- Top row with two sections -->
+      <div class="dashboard-top">
+        <!-- Top-left: Pantry -->
+        <section class="dashboard-section pantry-section">
+          <h2>Larder Liszt</h2>
+          <div class="section-controls">
+            <button class="btn">Add Item</button>
+          </div>
+          <table class="section-table">
             <thead>
-                <tr>
-                    <th>Item</th>
-                    <th>County Market</th>
-                    <th>Sam's Club</th>
-                    <th>For Meals</th>
-                    <th>Actions</th>
-                </tr>
+              <tr>
+                <th>Item</th>
+                <th>In Stock</th>
+              </tr>
             </thead>
-            <tbody id="groceryTableBody">
-                <!-- Grocery items will be populated here -->
+            <tbody id="pantryTableBody">
+              <tr class="empty-state">
+                <td class="empty-message">No items yet</td>
+                <td></td>
+              </tr>
             </tbody>
-        </table>
-    </div>
-        <footer>
-            <p>&copy; 2024 Picky App</p>
-        </footer>
-    </div>
+          </table>
+        </section>
 
-    <script src="/static/app.js"></script>
+        <!-- Top-right: Shopping List -->
+        <section class="dashboard-section shopping-section">
+          <h2>Chopin Liszt</h2>
+          <div class="section-controls">
+            <button class="btn" id="addShoppingItem">Add Item</button>
+            <button class="btn" id="clearCompleted">Clear Completed</button>
+          </div>
+          <table class="section-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>In Cart</th>
+              </tr>
+            </thead>
+            <tbody id="shoppingTableBody">
+              <tr class="empty-state">
+                <td class="empty-message">No items yet</td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <!-- Bottom row: Meal Plan -->
+      <section class="dashboard-section meals-section">
+        <h2>Meals</h2>
+        <div class="section-controls">
+          <button class="btn">Add Meal</button>
+        </div>
+        <table class="section-table">
+          <thead>
+            <tr>
+              <th>Meal</th>
+              <th>Ingredients</th>
+            </tr>
+          </thead>
+          <tbody id="mealsTableBody">
+            <tr class="empty-state">
+              <td class="empty-message">No meals yet</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+    <footer>
+      <p>&copy; <span id="currentYear"></span> Plum Industries</p>
+    </footer>
+  </div>
+
+  <script src="/static/app.js"></script>
 </body>
+
 </html>
