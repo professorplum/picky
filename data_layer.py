@@ -44,69 +44,108 @@ class DataLayer:
             print(f"Error writing {file_path}: {e}")
             return False
     
-    # Meal planner methods removed
-    def get_persons(self) -> List[str]:
-        """Get list of persons"""
-        data = self._read_json_file("persons")
-        return data.get("persons", [])
-    
-    def add_person(self, person_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Add a new person to the list"""
-        data = self._read_json_file("persons")
-        persons = data.get("persons", [])
-        
-        person_name = person_data.get("name", "").strip()
-        if person_name and person_name not in persons:
-            persons.append(person_name)
-            data["persons"] = persons
-            data["lastUpdated"] = datetime.utcnow().isoformat()
-            
-            if self._write_json_file("persons", data):
-                return {"success": True, "message": "Person added successfully", "persons": persons}
-            else:
-                return {"success": False, "message": "Failed to add person"}
-        else:
-            return {"success": False, "message": "Person already exists or invalid name"}
-    
-    def _get_default_week_structure(self) -> Dict[str, Any]:
-        """Return default week structure with empty meals"""
-        current_week = self._get_current_week_key()
-        return {
-            "weekData": {
-                current_week: {
-                    "Monday": "",
-                    "Tuesday": "",
-                    "Wednesday": "",
-                    "Thursday": "",
-                    "Friday": "",
-                    "Saturday": "",
-                    "Sunday": ""
-                }
-            }
-        }
-    
-    def _get_current_week_key(self) -> str:
-        """Get current week key in format YYYY-W##"""
-        now = datetime.now()
-        year, week, _ = now.isocalendar()
-        return f"{year}-W{week:02d}"
-    
-    def get_grocery_items(self) -> List[Dict[str, Any]]:
-        """Get all grocery items"""
-        data = self._read_json_file("grocery_items")
+    # === Larder Liszt (Inventory) Methods ===
+    def get_larder_items(self) -> List[Dict[str, Any]]:
+        """Get all larder items"""
+        data = self._read_json_file("larder_items")
         return data.get("items", [])
     
-    def save_grocery_items(self, items: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Save grocery items"""
-        data = {
-            "items": items,
-            "lastUpdated": datetime.utcnow().isoformat()
+    def add_larder_item(self, item_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Add a new larder item"""
+        data = self._read_json_file("larder_items")
+        items = data.get("items", [])
+        
+        # Create new item with ID and default values
+        new_item = {
+            "id": self._generate_id(),
+            "name": item_data.get("name", "").strip(),
+            "inStock": item_data.get("inStock", False),
+            "createdAt": datetime.utcnow().isoformat()
         }
         
-        if self._write_json_file("grocery_items", data):
-            return {"success": True, "message": "Grocery items saved successfully"}
+        if new_item["name"]:
+            items.append(new_item)
+            data = {
+                "items": items,
+                "lastUpdated": datetime.utcnow().isoformat()
+            }
+            
+            if self._write_json_file("larder_items", data):
+                return {"success": True, "message": "Larder item added successfully", "item": new_item}
+            else:
+                return {"success": False, "message": "Failed to add larder item"}
         else:
-            return {"success": False, "message": "Failed to save grocery items"}
+            return {"success": False, "message": "Item name is required"}
+
+    # === Chopin Liszt (Shopping) Methods ===
+    def get_shopping_items(self) -> List[Dict[str, Any]]:
+        """Get all shopping items"""
+        data = self._read_json_file("shopping_items")
+        return data.get("items", [])
+    
+    def add_shopping_item(self, item_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Add a new shopping item"""
+        data = self._read_json_file("shopping_items")
+        items = data.get("items", [])
+        
+        # Create new item with ID and default values
+        new_item = {
+            "id": self._generate_id(),
+            "name": item_data.get("name", "").strip(),
+            "inCart": item_data.get("inCart", False),
+            "createdAt": datetime.utcnow().isoformat()
+        }
+        
+        if new_item["name"]:
+            items.append(new_item)
+            data = {
+                "items": items,
+                "lastUpdated": datetime.utcnow().isoformat()
+            }
+            
+            if self._write_json_file("shopping_items", data):
+                return {"success": True, "message": "Shopping item added successfully", "item": new_item}
+            else:
+                return {"success": False, "message": "Failed to add shopping item"}
+        else:
+            return {"success": False, "message": "Item name is required"}
+
+    # === Meals Methods ===
+    def get_meal_items(self) -> List[Dict[str, Any]]:
+        """Get all meal items"""
+        data = self._read_json_file("meal_items")
+        return data.get("items", [])
+    
+    def add_meal_item(self, meal_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Add a new meal item"""
+        data = self._read_json_file("meal_items")
+        items = data.get("items", [])
+        
+        # Create new meal with ID and default values
+        new_meal = {
+            "id": self._generate_id(),
+            "name": meal_data.get("name", "").strip(),
+            "ingredients": meal_data.get("ingredients", "").strip(),
+            "createdAt": datetime.utcnow().isoformat()
+        }
+        
+        if new_meal["name"]:
+            items.append(new_meal)
+            data = {
+                "items": items,
+                "lastUpdated": datetime.utcnow().isoformat()
+            }
+            
+            if self._write_json_file("meal_items", data):
+                return {"success": True, "message": "Meal added successfully", "item": new_meal}
+            else:
+                return {"success": False, "message": "Failed to add meal"}
+        else:
+            return {"success": False, "message": "Meal name is required"}
+
+    def _generate_id(self) -> str:
+        """Generate a simple ID based on timestamp"""
+        return str(int(datetime.utcnow().timestamp() * 1000))
 
 
 # Future: MongoDB Atlas Data Layer

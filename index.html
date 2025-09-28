@@ -15,26 +15,75 @@
             </div>
         </header>
 
-        <main>
-            <div class="grocery-section">
-                <h2>Grocery List</h2>
-                <div class="grocery-controls">
-                    <button id="addGroceryItem" class="btn">Add Item</button>
+        <main class="dashboard">
+            <!-- Top row with two sections -->
+            <div class="dashboard-top">
+                <!-- Top-left: Pantry -->
+                <section class="dashboard-section pantry-section">
+                    <h2>Larder Liszt</h2>
+                    <div class="section-controls">
+                        <button class="btn">Add Item</button>
+                    </div>
+                    <table class="section-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>In Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pantryTableBody">
+                            <tr class="empty-state">
+                                <td class="empty-message">No items yet</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Top-right: Shopping List -->
+                <section class="dashboard-section shopping-section">
+                    <h2>Chopin Liszt</h2>
+                    <div class="section-controls">
+                        <button class="btn">Add Item</button>
+                    </div>
+                    <table class="section-table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>In Cart</th>
+                            </tr>
+                        </thead>
+                        <tbody id="shoppingTableBody">
+                            <tr class="empty-state">
+                                <td class="empty-message">No items yet</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+
+            <!-- Bottom row: Meal Plan -->
+            <section class="dashboard-section meals-section">
+                <h2>Meals</h2>
+                <div class="section-controls">
+                    <button class="btn">Add Meal</button>
                 </div>
-                <table class="grocery-table">
+                <table class="section-table">
                     <thead>
                         <tr>
-                            <th>Item</th>
-                            <th>Bought</th>
-                            <th>Delete</th>
+                            <th>Meal</th>
+                            <th>Ingredients</th>
                         </tr>
                     </thead>
-                    <tbody id="groceryTableBody">
-                        <!-- Grocery items will be populated here -->
-                    </tbody>
+                        <tbody id="mealsTableBody">
+                            <tr class="empty-state">
+                                <td class="empty-message">No meals yet</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
                 </table>
-                <!-- Status moved to top for errors only -->
-            </div>
+            </section>
         </main>
         <footer>
             <p>&copy; 2025 Plum Industries</p>

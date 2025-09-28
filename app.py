@@ -32,38 +32,56 @@ def health():
         "env": app.config.get("ENV_NAME")
     })
 
-# Meal planner endpoints removed
-
-@app.route('/api/persons', methods=['GET'])
-def get_persons():
+# === Larder Liszt (Inventory) ===
+@app.route('/api/larder-items', methods=['GET'])
+def get_larder_items():
     try:
-        persons = data_layer.get_persons()
-        return jsonify(persons)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/persons', methods=['POST'])
-def add_person():
-    try:
-        data = request.get_json()
-        result = data_layer.add_person(data)
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/grocery-items', methods=['GET'])
-def get_grocery_items():
-    try:
-        items = data_layer.get_grocery_items()
+        items = data_layer.get_larder_items()
         return jsonify(items)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/grocery-items', methods=['POST'])
-def save_grocery_items():
+@app.route('/api/larder-items', methods=['POST'])
+def add_larder_item():
     try:
-        items = request.get_json()
-        result = data_layer.save_grocery_items(items)
+        item_data = request.get_json()
+        result = data_layer.add_larder_item(item_data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# === Chopin Liszt (Shopping) ===
+@app.route('/api/shopping-items', methods=['GET'])
+def get_shopping_items():
+    try:
+        items = data_layer.get_shopping_items()
+        return jsonify(items)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/shopping-items', methods=['POST'])
+def add_shopping_item():
+    try:
+        item_data = request.get_json()
+        result = data_layer.add_shopping_item(item_data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# === Meals ===
+@app.route('/api/meal-items', methods=['GET'])
+def get_meal_items():
+    try:
+        items = data_layer.get_meal_items()
+        return jsonify(items)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/meal-items', methods=['POST'])
+def add_meal_item():
+    try:
+        meal_data = request.get_json()
+        result = data_layer.add_meal_item(meal_data)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
