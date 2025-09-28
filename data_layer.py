@@ -143,9 +143,43 @@ class DataLayer:
         else:
             return {"success": False, "message": "Meal name is required"}
 
+    # === Grocery Items Methods ===
+    def get_grocery_items(self) -> List[Dict[str, Any]]:
+        """Get all grocery items"""
+        data = self._read_json_file("grocery_items")
+        return data.get("items", [])
+    
+    def save_grocery_items(self, items_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Save grocery items (replace all items)"""
+        # Validate and sanitize items
+        sanitized_items = []
+        for item in items_data:
+            if isinstance(item, dict):
+                sanitized_item = {
+                    "id": item.get("id", self._generate_id()),
+                    "name": str(item.get("name", "")).strip(),
+                    "checked": bool(item.get("checked", False))
+                }
+                # Only add items with valid names
+                if sanitized_item["name"]:
+                    sanitized_items.append(sanitized_item)
+        
+        data = {
+            "items": sanitized_items,
+            "lastUpdated": datetime.utcnow().isoformat()
+        }
+        
+        if self._write_json_file("grocery_items", data):
+            return {"success": True, "message": "Grocery items saved successfully", "count": len(sanitized_items)}
+        else:
+            return {"success": False, "message": "Failed to save grocery items"}
+
     def _generate_id(self) -> str:
-        """Generate a simple ID based on timestamp"""
-        return str(int(datetime.utcnow().timestamp() * 1000))
+        """Generate a unique ID using timestamp + random component to prevent collisions"""
+        import random
+        timestamp = int(datetime.utcnow().timestamp() * 1000)
+        random_suffix = random.randint(1000, 9999)
+        return f"{timestamp}-{random_suffix}"
 
 
 # Future: MongoDB Atlas Data Layer

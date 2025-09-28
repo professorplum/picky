@@ -2,6 +2,13 @@
 const API_BASE = `${window.location.origin}/api`;
 let groceryItems = [];
 
+// Initialize variables that are referenced elsewhere in the code
+let currentUser = 'default'; // Default user for meal planning
+let persons = []; // List of people for meal planning
+let mealData = {}; // Meal planning data
+let lastSavedData = {}; // Track what was last saved
+let currentWeek = getCurrentWeek(); // Current week for meal planning
+
 document.addEventListener('DOMContentLoaded', function() {
     showStatus('Loading grocery list...', 'info');
     setupGroceryEventListeners();
@@ -482,24 +489,28 @@ function renderGroceryTable() {
         return;
     }
 
-    tbody.innerHTML = sortedItems.map((item, index) => `
+    tbody.innerHTML = sortedItems.map((item, sortedIndex) => {
+        // Find the original index in the unsorted array
+        const originalIndex = groceryItems.findIndex(originalItem => originalItem.id === item.id);
+        return `
         <tr>
             <td>
                 <input type="text" 
                        class="grocery-item-input" 
                        value="${escapeHtml(item.name)}" 
-                       data-index="${index}" 
+                       data-index="${originalIndex}" 
                        data-field="name">
             </td>
             <td style="text-align: center;">
                 <input type="checkbox" 
                        class="grocery-checkbox" 
                        ${item.checked ? 'checked' : ''} 
-                       data-index="${index}" 
+                       data-index="${originalIndex}" 
                        data-field="checked">
             </td>
         </tr>
-    `).join('');
+        `;
+    }).join('');
 
     // Add event listeners to inputs
     tbody.querySelectorAll('.grocery-item-input').forEach(input => {

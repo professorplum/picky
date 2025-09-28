@@ -17,6 +17,9 @@ def index():
 @app.route('/static/<path:filename>')
 def static_files(filename):
     """Serve static files (CSS, JS, etc.) from static/ directory"""
+    # Prevent path traversal attacks
+    if '..' in filename or filename.startswith('/'):
+        return "Access denied", 403
     return send_from_directory('static', filename)
 
 @app.route('/favicon.ico')
@@ -45,6 +48,13 @@ def get_larder_items():
 def add_larder_item():
     try:
         item_data = request.get_json()
+        if not item_data or not isinstance(item_data, dict):
+            return jsonify({"error": "Invalid JSON data"}), 400
+        
+        # Validate required fields
+        if 'name' not in item_data or not item_data['name'].strip():
+            return jsonify({"error": "Item name is required"}), 400
+        
         result = data_layer.add_larder_item(item_data)
         return jsonify(result)
     except Exception as e:
@@ -63,6 +73,13 @@ def get_shopping_items():
 def add_shopping_item():
     try:
         item_data = request.get_json()
+        if not item_data or not isinstance(item_data, dict):
+            return jsonify({"error": "Invalid JSON data"}), 400
+        
+        # Validate required fields
+        if 'name' not in item_data or not item_data['name'].strip():
+            return jsonify({"error": "Item name is required"}), 400
+        
         result = data_layer.add_shopping_item(item_data)
         return jsonify(result)
     except Exception as e:
@@ -81,7 +98,35 @@ def get_meal_items():
 def add_meal_item():
     try:
         meal_data = request.get_json()
+        if not meal_data or not isinstance(meal_data, dict):
+            return jsonify({"error": "Invalid JSON data"}), 400
+        
+        # Validate required fields
+        if 'name' not in meal_data or not meal_data['name'].strip():
+            return jsonify({"error": "Meal name is required"}), 400
+        
         result = data_layer.add_meal_item(meal_data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# === Grocery Items ===
+@app.route('/api/grocery-items', methods=['GET'])
+def get_grocery_items():
+    try:
+        items = data_layer.get_grocery_items()
+        return jsonify(items)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/grocery-items', methods=['POST'])
+def save_grocery_items():
+    try:
+        items_data = request.get_json()
+        # Validate that it's a list
+        if not isinstance(items_data, list):
+            return jsonify({"error": "Expected a list of grocery items"}), 400
+        result = data_layer.save_grocery_items(items_data)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
