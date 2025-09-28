@@ -1,46 +1,46 @@
 /* CSS Custom Properties */
 :root {
-	/* Colors */
-	--color-primary: #007aff;
-	--color-primary-hover: #0056cc;
-	--color-success: #34c759;
-	--color-warning: #ff9500;
-	--color-text: #1d1d1f;
-	--color-text-secondary: #2c2c2e;
-	--color-text-muted: #6e6e73;
-	--color-text-light: #8e8e93;
-	--color-background: #f5f5f7;
-	--color-surface: #ffffff;
-	--color-border: #e5e5e7;
-	--color-border-light: #f0f0f0;
-	--color-border-section: #f2f2f7;
-	--color-hover: #f9f9f9;
-	--color-control: #f2f2f7;
-	--color-control-hover: #e5e5ea;
-	
-	/* Spacing */
-	--space-xs: 8px;
-	--space-sm: 12px;
-	--space-md: 16px;
-	--space-lg: 20px;
-	--space-xl: 24px;
-	--space-2xl: 30px;
-	--space-3xl: 40px;
-	
-	/* Border Radius */
-	--radius-sm: 8px;
-	--radius-md: 12px;
-	--radius-lg: 16px;
-	
-	/* Shadows */
-	--shadow-sm: 0 2px 16px rgba(0, 0, 0, 0.06);
-	--shadow-md: 0 4px 24px rgba(0, 0, 0, 0.08);
-	--shadow-toggle: 0 2px 4px rgba(0, 0, 0, 0.2);
-	
-	/* Transitions */
-	--transition-fast: 0.15s ease;
-	--transition-normal: 0.2s ease;
-	--transition-slow: 0.3s ease;
+  /* Colors */
+  --color-primary: #007aff;
+  --color-primary-hover: #0056cc;
+  --color-success: #34c759;
+  --color-warning: #ff9500;
+  --color-text: #1d1d1f;
+  --color-text-secondary: #2c2c2e;
+  --color-text-muted: #6e6e73;
+  --color-text-light: #8e8e93;
+  --color-background: #f5f5f7;
+  --color-surface: #ffffff;
+  --color-border: #e5e5e7;
+  --color-border-light: #f0f0f0;
+  --color-border-section: #f2f2f7;
+  --color-hover: #f9f9f9;
+  --color-control: #f2f2f7;
+  --color-control-hover: #e5e5ea;
+  
+  /* Spacing */
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 20px;
+  --space-xl: 24px;
+  --space-2xl: 30px;
+  --space-3xl: 40px;
+  
+  /* Border Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 16px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --shadow-toggle: 0 2px 4px rgba(0, 0, 0, 0.2);
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s ease;
+  --transition-slow: 0.3s ease;
 }
 
 /* Reset and base styles */
