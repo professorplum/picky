@@ -1,25 +1,25 @@
 # Copilot Instructions for Picky Meal Planner
 
 ## 🏗️ Architecture Overview
-- **Frontend:** `index.html`, `styles.css`, `app.js` (HTML/CSS/JS)
-- **Backend:** `app.py` (Flask server), `data_layer.py` (data abstraction)
-- **Startup:** `run.py` (main entry point, handles server launch and options)
-- **Data Storage:** JSON files in `data/` (`meals.json`, `persons.json`)
-- **Extensibility:** Data layer is designed to swap out JSON for MongoDB Atlas or Cosmos DB with minimal code changes.
+- **Frontend:** `index.html`, `styles.css`, `app.js` (vanilla HTML/CSS/JS, no framework)
+- **Backend:** `app.py` (Flask API server), `data_layer.py` (data abstraction)
+- **Startup:** `run.py` (main entry, handles server launch, port, browser options)
+- **Data Storage:** JSON files in `data/` (e.g., `meals.json`, `persons.json`, `grocery_items.json`)
+- **Extensibility:** Data layer is designed for easy migration to cloud DBs (MongoDB, Cosmos DB) by subclassing `DataLayer`.
 
-## 🔑 Key Workflows
-- **Local Development:**
-  - Activate environment: `source venv/bin/activate` or use `activate.sh`
-  - Install dependencies: `pip install -r requirements.txt`
+## 🔑 Key Developer Workflows
+- **Local dev:**
+  - Activate env: `activate.sh` (bash) or `activate.bat` (Windows)
+  - Install deps: `pip install -r requirements.txt`
   - Start app: `python run.py` (default port 5001, auto-opens browser)
-  - Custom options: `python run.py --port <PORT> --no-browser`
-- **Manual server start:** `python app.py` (for direct Flask usage)
-- **Frontend-only:** `python -m http.server 8000` (serves static files)
+  - Custom: `python run.py --port <PORT> --no-browser`
+- **Direct Flask:** `python app.py` (for debugging Flask only)
+- **Frontend-only:** `python -m http.server 8000` (serves static files, no backend)
 
 ## 🗂️ Data Layer Patterns
-- All data access is abstracted via `DataLayer` in `data_layer.py`.
-- To migrate to a cloud backend, implement a new class (e.g., `MongoDBDataLayer`) with the same interface.
-- Data auto-saves on user actions; no explicit save required in frontend.
+- All persistent data access is via `DataLayer` in `data_layer.py`.
+- To swap storage, subclass `DataLayer` and update backend wiring in `app.py`.
+- Data auto-saves on user actions; frontend does not manage persistence.
 
 ## 📊 Data Model Examples
 - **Meal data:**
@@ -39,30 +39,30 @@
 
 ## 🌐 API Endpoints
 - `GET /api/health` — health check
-- `GET/POST/PUT /api/meals/{user_id}` — meal data
-- `GET/POST /api/persons` — person list
+- `GET|POST|PUT /api/meals/{user_id}` — meal data
+- `GET|POST /api/persons` — person list
 
 ## 🛠️ Project Conventions
-- No authentication; single local user for now
-- Data directory is auto-created if missing
-- All code is in root except for `data/` JSON files
-- Extensible for future cloud migration (see README for migration path)
+- No authentication; single local user only
+- `data/` is auto-created if missing
+- All code in root except for `data/` and `static/`
+- Extensible for future cloud migration (see `README.md`)
 
 ## 🧩 Integration Points
-- Frontend communicates with backend via REST API endpoints
-- Data layer is the only backend component that touches persistent storage
-- For new features, extend `DataLayer` and update API routes in `app.py`
+- Frontend uses REST API endpoints in `app.py` for all data
+- Only `data_layer.py` touches persistent storage
+- For new features: extend `DataLayer`, update API routes in `app.py`, and update frontend API calls
 
 ## 📚 Reference Files
 - `README.md` — architecture, setup, data model, migration path
-- `data_layer.py` — backend abstraction
+- `data_layer.py` — backend data abstraction
 - `run.py` — main entry, server options
 - `app.py` — Flask routes and API logic
 - `data/` — persistent data
 
 ---
 **For AI agents:**
-- Follow the data layer abstraction for any backend changes
-- Use provided API endpoints for frontend-backend communication
-- Reference `README.md` for setup and migration details
+- Always use the data layer abstraction for backend changes
+- Use REST API endpoints for frontend-backend communication
+- Reference `README.md` for setup, data model, and migration details
 - Keep new code extensible for future cloud backends
