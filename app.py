@@ -1,10 +1,20 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from data_layer import DataLayer
+from dotenv import load_dotenv
+from config import get_config
 import os
 
+# Load environment variables from .env file (if it exists)
+load_dotenv()
+
+# Create Flask app and configure it
 app = Flask(__name__)
-CORS(app)
+config_class = get_config()
+app.config.from_object(config_class)
+
+# Configure CORS based on environment
+CORS(app, origins=app.config.get('CORS_ORIGINS', '*'))
 
 # Initialize data layer
 data_layer = DataLayer()
@@ -29,11 +39,21 @@ def favicon():
 
 @app.route('/api/health', methods=['GET'])
 def health():
-    return jsonify({
+    config_info = {
         "status": "OK",
         "message": "Picky API is running",
-        "env": app.config.get("ENV_NAME")
-    })
+        "env": app.config.get("ENV_NAME"),
+        "debug": app.config.get("DEBUG"),
+        "storage_type": "local_files" if app.config.get("USE_LOCAL_FILES") else "cosmos_db"
+    }
+    
+    # Only include data_dir for local file storage
+    if app.config.get("USE_LOCAL_FILES"):
+        config_info["data_dir"] = app.config.get("DATA_DIR")
+    else:
+        config_info["database"] = app.config.get("COSMOS_DATABASE")
+    
+    return jsonify(config_info)
 
 # === Larder Liszt (Inventory) ===
 @app.route('/api/larder-items', methods=['GET'])
@@ -111,14 +131,29 @@ def add_meal_item():
         return jsonify({"error": str(e)}), 500
 
 
-def run_server(port=None, debug=True):
-    # Create data directory if it doesn't exist
-    os.makedirs('data', exist_ok=True)
+def run_server(port=None, debug=None):
+    # Use configuration values if not explicitly provided
+    if debug is None:
+        debug = app.config.get('DEBUG', True)
+    
+    # Display startup information
     print("🍽️  Starting Picky...")
-    print("📁 Data will be stored in ./data/ directory")
+    print(f"🌍 Environment: {app.config.get('ENV_NAME', 'Unknown')}")
+    
+    # Handle data storage setup based on configuration
+    if app.config.get('USE_LOCAL_FILES', True):
+        data_dir = app.config.get('DATA_DIR', 'data')
+        os.makedirs(data_dir, exist_ok=True)
+        print(f"📁 Data storage: Local files in ./{data_dir}/")
+    else:
+        print(f"🗄️  Data storage: Cosmos DB ({app.config.get('COSMOS_DATABASE', 'picky')})")
+    
+    print(f"🐛 Debug mode: {debug}")
     print(f"🌐 Server running at http://localhost:{port}")
     print(f"📊 API available at http://localhost:{port}/api/health")
-    app.run(debug=debug, host='0.0.0.0', port=port)
+    
+    host = app.config.get('HOST', '0.0.0.0')
+    app.run(debug=debug, host=host, port=port)
 
 
 if __name__ == "__main__":
