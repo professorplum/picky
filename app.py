@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from data_layer import DataLayer
+from cosmos_data_layer import CosmosDataLayer
 from dotenv import load_dotenv
 from config import get_config
 import os
@@ -16,8 +17,22 @@ app.config.from_object(config_class)
 # Configure CORS based on environment
 CORS(app, origins=app.config.get('CORS_ORIGINS', '*'))
 
-# Initialize data layer
-data_layer = DataLayer()
+# Initialize data layer based on configuration
+if app.config.get('USE_LOCAL_FILES', True):
+    data_layer = DataLayer()
+    print("📁 Using local file storage")
+else:
+    # Use Cosmos DB
+    endpoint = app.config.get('COSMOS_ENDPOINT')
+    key = app.config.get('COSMOS_KEY')
+    database = app.config.get('COSMOS_DATABASE')
+    
+    if endpoint and key and database:
+        data_layer = CosmosDataLayer(endpoint, key, database)
+        print(f"🗄️  Using Cosmos DB: {database}")
+    else:
+        print("❌ Cosmos DB configuration missing, falling back to local files")
+        data_layer = DataLayer()
 
 @app.route('/')
 def index():
