@@ -40,8 +40,8 @@ class DevelopmentConfig(Config):
     COSMOS_KEY = os.environ.get('COSMOS_KEY', 'C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==')  # Emulator default key
     COSMOS_DATABASE = os.environ.get('COSMOS_DATABASE', 'picky-dev')
     
-    # More permissive CORS for local development
-    CORS_ORIGINS = ['http://localhost:*', 'http://127.0.0.1:*']
+    # Specific ports for local development security
+    CORS_ORIGINS = ['http://localhost:5001', 'http://127.0.0.1:5001']
 
 
 class StagingConfig(Config):
@@ -54,7 +54,7 @@ class StagingConfig(Config):
     DATA_DIR = None  # Not used with Cosmos DB
     
     # Restricted CORS for staging
-    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', 'https://*.azurewebsites.net')
+    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', 'https://*.azurewebsites.net').split(',')
 
 
 class ProductionConfig(Config):
@@ -66,8 +66,13 @@ class ProductionConfig(Config):
     USE_LOCAL_FILES = False
     DATA_DIR = None  # Not used with Cosmos DB
     
-    # Strict CORS for production
-    CORS_ORIGINS = os.environ.get('CORS_ORIGINS', 'https://your-production-domain.com')
+    # Production requires explicit CORS configuration
+    def __init__(self):
+        super().__init__()  # Call parent constructor first
+        cors_origins = os.environ.get('CORS_ORIGINS')
+        if not cors_origins:
+            raise ValueError("CORS_ORIGINS environment variable must be set in production")
+        self.CORS_ORIGINS = cors_origins.split(',')
 
 
 # Configuration mapping
