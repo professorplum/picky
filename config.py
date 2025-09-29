@@ -68,6 +68,7 @@ class ProductionConfig(Config):
     
     # Production requires explicit CORS configuration
     def __init__(self):
+        super().__init__()  # Call parent constructor first
         cors_origins = os.environ.get('CORS_ORIGINS')
         if not cors_origins:
             raise ValueError("CORS_ORIGINS environment variable must be set in production")
