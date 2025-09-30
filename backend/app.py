@@ -3,20 +3,11 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from pathlib import Path
 import os
-import sys
 
-# Handle both module execution and direct execution
-if __name__ == "__main__" or __package__ is None:
-    # Direct execution - add parent dir to path
-    sys.path.insert(0, os.path.dirname(__file__))
-    from data_layer import DataLayer
-    from cosmos_data_layer import CosmosDataLayer
-    from config import get_config
-else:
-    # Module execution
-    from .data_layer import DataLayer
-    from .cosmos_data_layer import CosmosDataLayer
-    from .config import get_config
+# Import from backend package (works with editable install)
+from backend.data_layer import DataLayer
+from backend.cosmos_data_layer import CosmosDataLayer
+from backend.config import get_config
 
 # Load environment variables from .env file (if it exists)
 load_dotenv()
