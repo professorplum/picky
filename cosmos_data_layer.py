@@ -243,37 +243,14 @@ class CosmosDataLayer:
     # === Update Operations ===
     def update_shopping_item(self, item_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
         """Update a shopping item in Cosmos DB"""
-        try:
-            container = self.containers["shopping_items"]
-            
-            # Read existing item
-            existing_item = container.read_item(item=item_id, partition_key=item_id)
-            
-            # Apply updates
-            immutable_fields = {'id', 'createdAt', 'migratedAt'}
-            for key, value in updates.items():
-                if key not in immutable_fields:  # Don't allow changes to ID or system fields
-                    existing_item[key] = value
-            
-            existing_item['modifiedAt'] = datetime.utcnow().isoformat()
-            
-            # Replace item
-            updated_item = container.replace_item(item=existing_item, body=existing_item)
-            
-            # Clean response
-            clean_item = {k: v for k, v in updated_item.items() 
-                         if not k.startswith('_') and k != 'ttl'}
-            
-            return {
-                "success": True,
-                "message": "Grocery item updated successfully",
-                "item": clean_item
-            }
-            
-        except exceptions.CosmosResourceNotFoundError:
-            return {"success": False, "message": "Grocery item not found"}
-        except exceptions.CosmosHttpResponseError as e:
-            raise RuntimeError(f"Failed to update shopping item: {e}")
+        return self._update_item(
+            container_name="shopping_items",
+            item_id=item_id,
+            updates=updates,
+            success_message="Grocery item updated successfully",
+            not_found_message="Grocery item not found",
+            error_context="shopping item"
+        )
     
     def _update_item(self, container_name: str, item_id: str, updates: Dict[str, Any], success_message: str, not_found_message: str, error_context: str) -> Dict[str, Any]:
         """Helper to update an item in a specified container"""
