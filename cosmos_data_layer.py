@@ -250,8 +250,9 @@ class CosmosDataLayer:
             existing_item = container.read_item(item=item_id, partition_key=item_id)
             
             # Apply updates
+            immutable_fields = {'id', 'createdAt', 'migratedAt'}
             for key, value in updates.items():
-                if key not in ['id']:  # Don't allow ID changes
+                if key not in immutable_fields:  # Don't allow changes to ID or system fields
                     existing_item[key] = value
             
             existing_item['modifiedAt'] = datetime.utcnow().isoformat()
