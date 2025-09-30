@@ -37,7 +37,13 @@ class DevelopmentConfig(Config):
     
     # Cosmos DB settings for local testing (emulator defaults)
     COSMOS_ENDPOINT = os.environ.get('COSMOS_ENDPOINT', 'https://localhost:8081')
-    COSMOS_KEY = os.environ.get('COSMOS_KEY', 'C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==')  # Emulator default key
+    COSMOS_KEY = os.environ.get('COSMOS_KEY')
+    if COSMOS_KEY is None:
+        raise RuntimeError(
+            "COSMOS_KEY environment variable must be set for local Cosmos DB emulator. "
+            "For the emulator, use the default key: "
+            "'C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=='"
+        )
     COSMOS_DATABASE = os.environ.get('COSMOS_DATABASE', 'picky-dev')
     
     # Specific ports for local development security
