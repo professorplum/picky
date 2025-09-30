@@ -44,11 +44,11 @@ class DataMigration:
                 return {}
         return {}
     
-    def migrate_grocery_items(self) -> Dict[str, Any]:
-        """Migrate grocery_items.json to Cosmos DB"""
-        print("📦 Migrating grocery items...")
+    def migrate_shopping_items(self) -> Dict[str, Any]:
+        """Migrate shopping_items.json to Cosmos DB"""
+        print("📦 Migrating shopping items...")
         
-        data = self._read_json_file("grocery_items")
+        data = self._read_json_file("shopping_items")
         items = data.get("items", [])
         
         migrated_count = 0
@@ -66,7 +66,7 @@ class DataMigration:
                 }
                 
                 # Insert directly into container
-                container = self.cosmos_layer.containers["grocery_items"]
+                container = self.cosmos_layer.containers["shopping_items"]
                 container.create_item(body=cosmos_item)
                 migrated_count += 1
                 print(f"  ✅ Migrated: {item['name']}")
@@ -77,17 +77,17 @@ class DataMigration:
                 print(f"  ❌ {error_msg}")
         
         return {
-            "type": "grocery_items",
+            "type": "shopping_items",
             "total": len(items),
             "migrated": migrated_count,
             "errors": errors
         }
     
-    def migrate_inventory_items(self) -> Dict[str, Any]:
-        """Migrate inventory_items.json to Cosmos DB"""
-        print("📦 Migrating inventory items...")
+    def migrate_larder_items(self) -> Dict[str, Any]:
+        """Migrate larder_items.json to Cosmos DB"""
+        print("📦 Migrating larder items...")
         
-        data = self._read_json_file("inventory_items")
+        data = self._read_json_file("larder_items")
         items = data.get("items", [])
         
         migrated_count = 0
@@ -105,7 +105,7 @@ class DataMigration:
                 }
                 
                 # Insert directly into container
-                container = self.cosmos_layer.containers["inventory_items"]
+                container = self.cosmos_layer.containers["larder_items"]
                 container.create_item(body=cosmos_item)
                 migrated_count += 1
                 print(f"  ✅ Migrated: {item['name']}")
@@ -116,50 +116,12 @@ class DataMigration:
                 print(f"  ❌ {error_msg}")
         
         return {
-            "type": "inventory_items",
+            "type": "larder_items",
             "total": len(items),
             "migrated": migrated_count,
             "errors": errors
         }
     
-    def migrate_persons(self) -> Dict[str, Any]:
-        """Migrate persons.json to Cosmos DB"""
-        print("👥 Migrating persons...")
-        
-        data = self._read_json_file("persons")
-        persons = data.get("persons", [])
-        
-        migrated_count = 0
-        errors = []
-        
-        for i, person_name in enumerate(persons):
-            try:
-                # Create person document with generated ID
-                cosmos_person = {
-                    "id": f"person-{i+1}",
-                    "name": person_name,
-                    "type": "person",
-                    "migratedAt": datetime.utcnow().isoformat(),
-                    "originalIndex": i
-                }
-                
-                # Insert directly into container
-                container = self.cosmos_layer.containers["persons"]
-                container.create_item(body=cosmos_person)
-                migrated_count += 1
-                print(f"  ✅ Migrated: {person_name}")
-                
-            except Exception as e:
-                error_msg = f"Failed to migrate person '{person_name}': {e}"
-                errors.append(error_msg)
-                print(f"  ❌ {error_msg}")
-        
-        return {
-            "type": "persons",
-            "total": len(persons),
-            "migrated": migrated_count,
-            "errors": errors
-        }
     
     def migrate_all(self) -> Dict[str, Any]:
         """Migrate all data from JSON files to Cosmos DB"""
@@ -169,9 +131,8 @@ class DataMigration:
         results = []
         
         # Migrate each data type
-        results.append(self.migrate_grocery_items())
-        results.append(self.migrate_inventory_items())
-        results.append(self.migrate_persons())
+        results.append(self.migrate_shopping_items())
+        results.append(self.migrate_larder_items())
         
         # Summary
         total_items = sum(r["total"] for r in results)
@@ -203,7 +164,7 @@ class DataMigration:
         
         os.makedirs(backup_dir, exist_ok=True)
         
-        json_files = ["grocery_items.json", "inventory_items.json", "persons.json"]
+        json_files = ["shopping_items.json", "larder_items.json"]
         
         for filename in json_files:
             source_path = os.path.join(self.data_dir, filename)

@@ -32,8 +32,8 @@ def test_crud_operations():
         
         # Test each data type
         success = True
-        success &= test_grocery_items_crud(cosmos_layer)
-        success &= test_inventory_items_crud(cosmos_layer)
+        success &= test_shopping_items_crud(cosmos_layer)
+        success &= test_larder_items_crud(cosmos_layer)
         success &= test_meal_items_crud(cosmos_layer)
         
         if success:
@@ -48,9 +48,9 @@ def test_crud_operations():
         return False
 
 
-def test_grocery_items_crud(cosmos_layer: CosmosDataLayer) -> bool:
-    """Test CRUD operations for grocery items"""
-    print("\n🛒 Testing Grocery Items CRUD")
+def test_shopping_items_crud(cosmos_layer: CosmosDataLayer) -> bool:
+    """Test CRUD operations for shopping items"""
+    print("\n🛒 Testing Shopping Items CRUD")
     print("-" * 40)
     
     try:
@@ -70,7 +70,7 @@ def test_grocery_items_crud(cosmos_layer: CosmosDataLayer) -> bool:
         
         # READ (single)
         print("📖 Testing READ (single)...")
-        read_result = cosmos_layer.get_grocery_item(item_id)
+        read_result = cosmos_layer.get_shopping_item(item_id)
         
         if not read_result.get("success"):
             print(f"❌ READ failed: {read_result.get('message')}")
@@ -85,7 +85,7 @@ def test_grocery_items_crud(cosmos_layer: CosmosDataLayer) -> bool:
         
         # UPDATE
         print("✏️  Testing UPDATE...")
-        update_result = cosmos_layer.update_grocery_item(item_id, {
+        update_result = cosmos_layer.update_shopping_item(item_id, {
             "name": "Updated Grocery Item",
             "inCart": True
         })
@@ -98,7 +98,7 @@ def test_grocery_items_crud(cosmos_layer: CosmosDataLayer) -> bool:
         
         # DELETE
         print("🗑️  Testing DELETE...")
-        delete_result = cosmos_layer.delete_grocery_item(item_id)
+        delete_result = cosmos_layer.delete_shopping_item(item_id)
         
         if not delete_result.get("success"):
             print(f"❌ DELETE failed: {delete_result.get('message')}")
@@ -107,7 +107,7 @@ def test_grocery_items_crud(cosmos_layer: CosmosDataLayer) -> bool:
         print("✅ Deleted item successfully")
         
         # Verify deletion
-        verify_result = cosmos_layer.get_grocery_item(item_id)
+        verify_result = cosmos_layer.get_shopping_item(item_id)
         if verify_result.get("success"):
             print("❌ Item still exists after deletion!")
             return False
@@ -120,9 +120,9 @@ def test_grocery_items_crud(cosmos_layer: CosmosDataLayer) -> bool:
         return False
 
 
-def test_inventory_items_crud(cosmos_layer: CosmosDataLayer) -> bool:
-    """Test CRUD operations for inventory items"""
-    print("\n📦 Testing Inventory Items CRUD")
+def test_larder_items_crud(cosmos_layer: CosmosDataLayer) -> bool:
+    """Test CRUD operations for larder items"""
+    print("\n📦 Testing Larder Items CRUD")
     print("-" * 40)
     
     try:
@@ -142,7 +142,7 @@ def test_inventory_items_crud(cosmos_layer: CosmosDataLayer) -> bool:
         
         # READ (single)
         print("📖 Testing READ (single)...")
-        read_result = cosmos_layer.get_inventory_item(item_id)
+        read_result = cosmos_layer.get_larder_item(item_id)
         
         if not read_result.get("success"):
             print(f"❌ READ failed: {read_result.get('message')}")
@@ -157,7 +157,7 @@ def test_inventory_items_crud(cosmos_layer: CosmosDataLayer) -> bool:
         
         # UPDATE
         print("✏️  Testing UPDATE...")
-        update_result = cosmos_layer.update_inventory_item(item_id, {
+        update_result = cosmos_layer.update_larder_item(item_id, {
             "name": "Updated Inventory Item",
             "reorder": True
         })
@@ -170,7 +170,7 @@ def test_inventory_items_crud(cosmos_layer: CosmosDataLayer) -> bool:
         
         # DELETE
         print("🗑️  Testing DELETE...")
-        delete_result = cosmos_layer.delete_inventory_item(item_id)
+        delete_result = cosmos_layer.delete_larder_item(item_id)
         
         if not delete_result.get("success"):
             print(f"❌ DELETE failed: {delete_result.get('message')}")
@@ -179,7 +179,7 @@ def test_inventory_items_crud(cosmos_layer: CosmosDataLayer) -> bool:
         print("✅ Deleted item successfully")
         
         # Verify deletion
-        verify_result = cosmos_layer.get_inventory_item(item_id)
+        verify_result = cosmos_layer.get_larder_item(item_id)
         if verify_result.get("success"):
             print("❌ Item still exists after deletion!")
             return False

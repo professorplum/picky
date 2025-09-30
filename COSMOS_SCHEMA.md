@@ -12,16 +12,15 @@ All containers use **flexible `/id` partition key** for maximum adaptability and
 
 | Container Name | Purpose | Partition Key | Throughput |
 |----------------|---------|---------------|------------|
-| `grocery_items` | Shopping list items | `/id` | 400 RU/s |
-| `inventory_items` | Larder/pantry inventory | `/id` | 400 RU/s |
+| `shopping_items` | Shopping list items | `/id` | 400 RU/s |
+| `larder_items` | Larder/pantry inventory | `/id` | 400 RU/s |
 | `meal_items` | Future meal planning | `/id` | 400 RU/s |
-| `persons` | Person management | `/id` | 400 RU/s |
 
 ## Document Schemas
 
-### Grocery Items (Shopping List)
+### Shopping Items (Shopping List)
 
-**Container:** `grocery_items`
+**Container:** `shopping_items`
 
 ```json
 {
@@ -29,6 +28,7 @@ All containers use **flexible `/id` partition key** for maximum adaptability and
   "name": "bananas",
   "inCart": false,
   "createdAt": "2025-09-28T23:45:18.216071",
+  "modifiedAt": "2025-09-28T23:45:18.216071",
   "migratedAt": "2025-09-28T23:45:18.216071",
   "originalId": 1759017526823
 }
@@ -39,12 +39,13 @@ All containers use **flexible `/id` partition key** for maximum adaptability and
 - `name` (string, required): Item name
 - `inCart` (boolean): Whether item is in shopping cart
 - `createdAt` (string): ISO timestamp when created
+- `modifiedAt` (string): ISO timestamp when last modified
 - `migratedAt` (string, optional): ISO timestamp when migrated from JSON
 - `originalId` (number, optional): Original numeric ID from JSON migration
 
-### Inventory Items (Larder/Pantry)
+### Larder Items (Larder/Pantry)
 
-**Container:** `inventory_items`
+**Container:** `larder_items`
 
 ```json
 {
@@ -52,6 +53,7 @@ All containers use **flexible `/id` partition key** for maximum adaptability and
   "name": "apples",
   "reorder": false,
   "createdAt": "2025-09-28T23:45:18.216071",
+  "modifiedAt": "2025-09-28T23:45:18.216071",
   "migratedAt": "2025-09-28T23:45:18.216071",
   "originalId": 1759016375267
 }
@@ -62,29 +64,9 @@ All containers use **flexible `/id` partition key** for maximum adaptability and
 - `name` (string, required): Item name
 - `reorder` (boolean): Whether item needs reordering
 - `createdAt` (string): ISO timestamp when created
+- `modifiedAt` (string): ISO timestamp when last modified
 - `migratedAt` (string, optional): ISO timestamp when migrated from JSON
 - `originalId` (number, optional): Original numeric ID from JSON migration
-
-### Persons
-
-**Container:** `persons`
-
-```json
-{
-  "id": "person-1",
-  "name": "A",
-  "type": "person",
-  "migratedAt": "2025-09-28T23:45:18.216071",
-  "originalIndex": 0
-}
-```
-
-**Fields:**
-- `id` (string, required): Unique identifier (person-1, person-2, etc.)
-- `name` (string, required): Person's name
-- `type` (string): Document type identifier ("person")
-- `migratedAt` (string, optional): ISO timestamp when migrated from JSON
-- `originalIndex` (number, optional): Original array index from JSON migration
 
 ### Meal Items (Future)
 
@@ -95,7 +77,8 @@ All containers use **flexible `/id` partition key** for maximum adaptability and
   "id": "meal-12345-6789",
   "name": "Spaghetti Carbonara",
   "ingredients": "pasta, eggs, bacon, parmesan",
-  "createdAt": "2025-09-28T23:45:18.216071"
+  "createdAt": "2025-09-28T23:45:18.216071",
+  "modifiedAt": "2025-09-28T23:45:18.216071"
 }
 ```
 
@@ -104,6 +87,7 @@ All containers use **flexible `/id` partition key** for maximum adaptability and
 - `name` (string, required): Meal name
 - `ingredients` (string): Comma-separated ingredients list
 - `createdAt` (string): ISO timestamp when created
+- `modifiedAt` (string): ISO timestamp when last modified
 
 ## ID Generation Strategy
 
