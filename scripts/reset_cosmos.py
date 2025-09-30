@@ -5,7 +5,7 @@ Use this to start fresh with the new schema
 """
 import os
 from dotenv import load_dotenv
-from cosmos_data_layer import CosmosDataLayer
+from backend.cosmos_data_layer import CosmosDataLayer
 
 def reset_cosmos_containers():
     """Delete and recreate all containers to start fresh"""

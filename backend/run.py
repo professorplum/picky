@@ -40,7 +40,11 @@ def main():
 
     # Start Flask app
     try:
-        from app import run_server
+        # Handle both module execution and direct execution
+        try:
+            from .app import run_server
+        except ImportError:
+            from app import run_server
         run_server(port=port, debug=False)
     except Exception as e:
         print(f"Error starting server: {e}")

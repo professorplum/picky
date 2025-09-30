@@ -16,4 +16,4 @@ else
 fi
 
 # Start the development server with PORT=8001 and debug mode
-PORT=8001 python app.py
+PORT=8001 python -m backend.app

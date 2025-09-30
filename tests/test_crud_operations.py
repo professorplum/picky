@@ -5,7 +5,7 @@ Tests all Create, Read, Update, Delete operations
 """
 import os
 from dotenv import load_dotenv
-from cosmos_data_layer import CosmosDataLayer
+from backend.cosmos_data_layer import CosmosDataLayer
 
 
 def test_crud_operations():

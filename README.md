@@ -44,16 +44,16 @@ chmod +x activate.sh
 source venv/bin/activate
 
 # Default (port 5001)
-python run.py
+python -m backend.run
 
 # Custom port
-python run.py --port 8080
+python -m backend.run --port 8080
 
 # No browser auto-open
-python run.py --no-browser
+python -m backend.run --no-browser
 
 # Both options
-python run.py --port 3000 --no-browser
+python -m backend.run --port 3000 --no-browser
 ```
 This will:
 - Start the Flask server on the specified port (default: 5001)
@@ -72,18 +72,38 @@ This will:
 
 ```
 picky/
-├── app.py                 # Flask server
-├── data_layer.py          # Extensible data abstraction
-├── run.py                 # Startup script
-├── index.html             # Frontend
-├── styles.css             # Styling
-├── app.js                 # Frontend logic
-├── requirements.txt       # Python dependencies
+├── backend/               # Python Flask application
+│   ├── app.py            # Flask server & API routes
+│   ├── config.py         # Environment configurations
+│   ├── data_layer.py     # JSON file data layer
+│   ├── cosmos_data_layer.py  # Cosmos DB data layer
+│   └── run.py            # Startup script
+├── frontend/              # Static web files
+│   ├── index.html        # Main HTML page
+│   ├── styles.css        # CSS styles
+│   ├── app.js            # Frontend JavaScript
+│   ├── logo.png          # Logo image
+│   └── favicon.ico       # Favicon
+├── tests/                 # Test files
+│   ├── test_cosmos_connection.py
+│   ├── test_crud_operations.py
+│   └── test-cosmos.py
+├── scripts/               # Utility scripts
+│   ├── data_migration.py # JSON to Cosmos migration
+│   ├── schema_migration.py  # Schema management
+│   └── reset_cosmos.py   # Database reset utility
+├── docs/                  # Documentation
+│   ├── architecture.md   # Architecture overview
+│   ├── development_workflow.md  # Dev workflow guide
+│   ├── COSMOS_SCHEMA.md  # Database schema docs
+│   └── SECURITY_FIX_NOTES.md
 ├── data/                  # JSON data files (auto-created)
-│   ├── meals.json         # Meal data
-│   └── persons.json       # Person list
-└── README.md
+├── requirements.txt       # Python dependencies
+├── env.example            # Environment variables template
+└── README.md              # This file
 ```
+
+For detailed architecture and workflow documentation, see the [docs/](docs/) directory.
 
 ## 🔧 Data Layer Design
 
@@ -168,7 +188,12 @@ data_layer = CosmosDBDataLayer(connection_string="AccountEndpoint=...")
 
 ### Manual Server Start
 ```bash
-python app.py
+python -m backend.app
+```
+
+### Using the Development Script
+```bash
+./run-dev.sh
 ```
 
 ### Frontend Only (if server running elsewhere)
@@ -179,9 +204,7 @@ python -m http.server 8000
 ```
 
 ### Data Directory
-The app automatically creates a `data/` directory with:
-- `meals.json` - All meal planning data
-- `persons.json` - List of people
+The app automatically creates a `data/` directory at the project root with JSON files for local storage.
 
 ## 🔒 Security Notes
 

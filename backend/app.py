@@ -1,16 +1,28 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from data_layer import DataLayer
-from cosmos_data_layer import CosmosDataLayer
 from dotenv import load_dotenv
-from config import get_config
+from pathlib import Path
 import os
+
+# Import from backend package (works with editable install)
+from backend.data_layer import DataLayer
+from backend.cosmos_data_layer import CosmosDataLayer
+from backend.config import get_config
 
 # Load environment variables from .env file (if it exists)
 load_dotenv()
 
-# Create Flask app and configure it
-app = Flask(__name__)
+# Determine paths for Flask app using pathlib for robust path handling
+# Frontend directory is one level up from backend, then into frontend/
+backend_dir = Path(__file__).resolve().parent
+project_root = backend_dir.parent
+frontend_dir = project_root / 'frontend'
+
+# Create Flask app with frontend as both template and static folder
+app = Flask(__name__, 
+            static_folder=str(frontend_dir),
+            static_url_path='/static',
+            template_folder=str(frontend_dir))
 config_class = get_config()
 app.config.from_object(config_class)
 
@@ -46,20 +58,12 @@ else:
 @app.route('/')
 def index():
     """Serve the main HTML page"""
-    return send_from_directory('.', 'index.html')
-
-@app.route('/static/<path:filename>')
-def static_files(filename):
-    """Serve static files (CSS, JS, etc.) from static/ directory"""
-    # Prevent path traversal attacks
-    if '..' in filename or filename.startswith('/'):
-        return "Access denied", 403
-    return send_from_directory('static', filename)
+    return send_from_directory(str(frontend_dir), 'index.html')
 
 @app.route('/favicon.ico')
 def favicon():
-    """Serve favicon from root directory"""
-    return send_from_directory('.', 'favicon.ico')
+    """Serve favicon from frontend directory"""
+    return send_from_directory(str(frontend_dir), 'favicon.ico')
 
 @app.route('/api/health', methods=['GET'])
 def health():
@@ -236,8 +240,11 @@ def run_server(port=None, debug=None):
     
     if use_local_files in ('true', '1', 'yes', 'on'):
         data_dir = app.config.get('DATA_DIR', 'data')
+        # Ensure data_dir is relative to project root, not backend/
+        if not os.path.isabs(data_dir):
+            data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), data_dir)
         os.makedirs(data_dir, exist_ok=True)
-        print(f"Data storage: Local files in ./{data_dir}/")
+        print(f"Data storage: Local files in {data_dir}")
     else:
         print(f"Data storage: Cosmos DB ({app.config.get('COSMOS_DATABASE', 'picky')})")
     

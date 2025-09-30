@@ -8,7 +8,7 @@ import os
 from datetime import datetime
 from typing import Dict, List, Any
 from dotenv import load_dotenv
-from cosmos_data_layer import CosmosDataLayer
+from backend.cosmos_data_layer import CosmosDataLayer
 
 
 class DataMigration:
