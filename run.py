@@ -25,13 +25,13 @@ def main():
         else:
             port = 5001
 
-    print("🍽️  Picky - Local Development")
+    print("Picky - Local Development")
     print("=" * 50)
-    print("📁 Data will be stored in ./data/ directory")
-    print(f"🌐 Effective port: {port}")
+    print("Data will be stored in ./data/ directory")
+    print(f"Effective port: {port}")
     if not args.no_browser:
-        print(f"🌐 Opening browser at http://localhost:{port}")
-    print("🛑 Press Ctrl+C to stop the server")
+        print(f"Opening browser at http://localhost:{port}")
+    print("Press Ctrl+C to stop the server")
     print("=" * 50)
 
     # Open browser after delay (unless disabled)

@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from data_layer import DataLayer
+from cosmos_data_layer import CosmosDataLayer
 from dotenv import load_dotenv
 from config import get_config
 import os
@@ -16,8 +17,31 @@ app.config.from_object(config_class)
 # Configure CORS based on environment
 CORS(app, origins=app.config.get('CORS_ORIGINS', '*'))
 
-# Initialize data layer
-data_layer = DataLayer()
+# Initialize data layer based on configuration
+use_local_files = app.config.get('USE_LOCAL_FILES')
+if use_local_files is None:
+    raise ValueError("USE_LOCAL_FILES environment variable must be set to 'true' or 'false'")
+
+# Handle both string and boolean values
+if isinstance(use_local_files, bool):
+    use_local_files = str(use_local_files).lower()
+else:
+    use_local_files = str(use_local_files).lower()
+
+if use_local_files in ('true', '1', 'yes', 'on'):
+    data_layer = DataLayer()
+    print("Using local file storage")
+else:
+    # Use Cosmos DB - fail if configuration is missing
+    endpoint = app.config.get('COSMOS_ENDPOINT')
+    key = app.config.get('COSMOS_KEY')
+    database = app.config.get('COSMOS_DATABASE')
+    
+    if not endpoint or not key or not database:
+        raise ValueError("Cosmos DB configuration missing. Set COSMOS_ENDPOINT, COSMOS_KEY, and COSMOS_DATABASE environment variables.")
+    
+    data_layer = CosmosDataLayer(endpoint, key, database)
+    print(f"Using Cosmos DB: {database}")
 
 @app.route('/')
 def index():
@@ -130,6 +154,68 @@ def add_meal_item():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# === Update Operations ===
+@app.route('/api/larder-items/<item_id>', methods=['PUT'])
+def update_larder_item(item_id):
+    try:
+        update_data = request.get_json()
+        if not update_data or not isinstance(update_data, dict):
+            return jsonify({"error": "Invalid JSON data"}), 400
+        
+        result = data_layer.update_larder_item(item_id, update_data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/shopping-items/<item_id>', methods=['PUT'])
+def update_shopping_item(item_id):
+    try:
+        update_data = request.get_json()
+        if not update_data or not isinstance(update_data, dict):
+            return jsonify({"error": "Invalid JSON data"}), 400
+        
+        result = data_layer.update_shopping_item(item_id, update_data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/meal-items/<item_id>', methods=['PUT'])
+def update_meal_item(item_id):
+    try:
+        update_data = request.get_json()
+        if not update_data or not isinstance(update_data, dict):
+            return jsonify({"error": "Invalid JSON data"}), 400
+        
+        result = data_layer.update_meal_item(item_id, update_data)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# === Delete Operations ===
+@app.route('/api/larder-items/<item_id>', methods=['DELETE'])
+def delete_larder_item(item_id):
+    try:
+        result = data_layer.delete_larder_item(item_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/shopping-items/<item_id>', methods=['DELETE'])
+def delete_shopping_item(item_id):
+    try:
+        result = data_layer.delete_shopping_item(item_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/meal-items/<item_id>', methods=['DELETE'])
+def delete_meal_item(item_id):
+    try:
+        result = data_layer.delete_meal_item(item_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 def run_server(port=None, debug=None):
     # Use configuration values if not explicitly provided
@@ -141,16 +227,23 @@ def run_server(port=None, debug=None):
     print(f"🌍 Environment: {app.config.get('ENV_NAME', 'Unknown')}")
     
     # Handle data storage setup based on configuration
-    if app.config.get('USE_LOCAL_FILES', True):
+    use_local_files = app.config.get('USE_LOCAL_FILES')
+    # Handle both string and boolean values
+    if isinstance(use_local_files, bool):
+        use_local_files = str(use_local_files).lower()
+    else:
+        use_local_files = str(use_local_files).lower()
+    
+    if use_local_files in ('true', '1', 'yes', 'on'):
         data_dir = app.config.get('DATA_DIR', 'data')
         os.makedirs(data_dir, exist_ok=True)
-        print(f"📁 Data storage: Local files in ./{data_dir}/")
+        print(f"Data storage: Local files in ./{data_dir}/")
     else:
-        print(f"🗄️  Data storage: Cosmos DB ({app.config.get('COSMOS_DATABASE', 'picky')})")
+        print(f"Data storage: Cosmos DB ({app.config.get('COSMOS_DATABASE', 'picky')})")
     
-    print(f"🐛 Debug mode: {debug}")
-    print(f"🌐 Server running at http://localhost:{port}")
-    print(f"📊 API available at http://localhost:{port}/api/health")
+    print(f"Debug mode: {debug}")
+    print(f"Server running at http://localhost:{port}")
+    print(f"API available at http://localhost:{port}/api/health")
     
     host = app.config.get('HOST', '0.0.0.0')
     app.run(debug=debug, host=host, port=port)

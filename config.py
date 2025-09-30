@@ -14,7 +14,7 @@ class Config:
     HOST = os.environ.get('HOST', '0.0.0.0')
     
     # Data storage configuration
-    USE_LOCAL_FILES = True  # Default to local files
+    USE_LOCAL_FILES = os.environ.get('USE_LOCAL_FILES')  # Must be explicitly set
     DATA_DIR = os.environ.get('DATA_DIR', 'data')
     
     # Database configuration (for future Cosmos DB)
