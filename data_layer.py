@@ -14,8 +14,11 @@ class DataLayer:
         self.ensure_data_dir()
     
     def ensure_data_dir(self):
-        """Create data directory if it doesn't exist"""
-        os.makedirs(self.data_dir, exist_ok=True)
+        """Create data directory if it doesn't exist - fail if unable to create"""
+        try:
+            os.makedirs(self.data_dir, exist_ok=True)
+        except OSError as e:
+            raise OSError(f"Failed to create data directory '{self.data_dir}': {e}")
     
     def _get_file_path(self, filename: str) -> str:
         """Get full path for a data file"""
@@ -33,16 +36,14 @@ class DataLayer:
                 return {}
         return {}
     
-    def _write_json_file(self, filename: str, data: Dict[str, Any]) -> bool:
-        """Write data to JSON file"""
+    def _write_json_file(self, filename: str, data: Dict[str, Any]) -> None:
+        """Write data to JSON file - fail if unable to write"""
+        file_path = self._get_file_path(filename)
         try:
-            file_path = self._get_file_path(filename)
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
-            return True
-        except IOError as e:
-            print(f"Error writing {file_path}: {e}")
-            return False
+        except (IOError, OSError) as e:
+            raise IOError(f"Failed to write {file_path}: {e}")
     
     # === Larder Liszt (Inventory) Methods ===
     def get_larder_items(self) -> List[Dict[str, Any]]:
@@ -70,10 +71,8 @@ class DataLayer:
                 "lastUpdated": datetime.utcnow().isoformat()
             }
             
-            if self._write_json_file("larder_items", data):
-                return {"success": True, "message": "Larder item added successfully", "item": new_item}
-            else:
-                return {"success": False, "message": "Failed to add larder item"}
+            self._write_json_file("larder_items", data)
+            return {"success": True, "message": "Larder item added successfully", "item": new_item}
         else:
             return {"success": False, "message": "Item name is required"}
 
@@ -103,10 +102,8 @@ class DataLayer:
                 "lastUpdated": datetime.utcnow().isoformat()
             }
             
-            if self._write_json_file("shopping_items", data):
-                return {"success": True, "message": "Shopping item added successfully", "item": new_item}
-            else:
-                return {"success": False, "message": "Failed to add shopping item"}
+            self._write_json_file("shopping_items", data)
+            return {"success": True, "message": "Shopping item added successfully", "item": new_item}
         else:
             return {"success": False, "message": "Item name is required"}
 
@@ -136,10 +133,8 @@ class DataLayer:
                 "lastUpdated": datetime.utcnow().isoformat()
             }
             
-            if self._write_json_file("meal_items", data):
-                return {"success": True, "message": "Meal added successfully", "item": new_meal}
-            else:
-                return {"success": False, "message": "Failed to add meal"}
+            self._write_json_file("meal_items", data)
+            return {"success": True, "message": "Meal added successfully", "item": new_meal}
         else:
             return {"success": False, "message": "Meal name is required"}
 
