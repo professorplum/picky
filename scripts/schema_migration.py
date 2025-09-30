@@ -4,10 +4,16 @@ Schema Migration Framework for Picky CosmosDB
 Handles schema changes while preserving data
 """
 import os
+import sys
+from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any
+
+# Add parent directory to path to import from backend
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from dotenv import load_dotenv
-from cosmos_data_layer import CosmosDataLayer
+from backend.cosmos_data_layer import CosmosDataLayer
 
 class SchemaMigration:
     """

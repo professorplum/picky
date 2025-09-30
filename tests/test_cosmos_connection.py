@@ -3,8 +3,14 @@
 Test CosmosDB connection and container creation
 """
 import os
+import sys
+from pathlib import Path
+
+# Add parent directory to path to import from backend
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from dotenv import load_dotenv
-from cosmos_data_layer import CosmosDataLayer
+from backend.cosmos_data_layer import CosmosDataLayer
 
 def test_cosmos_connection():
     """Test CosmosDB connection and container creation"""

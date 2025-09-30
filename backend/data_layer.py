@@ -10,7 +10,11 @@ class DataLayer:
     """
     
     def __init__(self, data_dir: str = "data"):
-        self.data_dir = data_dir
+        # If relative path, make it relative to project root (not backend/)
+        if not os.path.isabs(data_dir):
+            self.data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), data_dir)
+        else:
+            self.data_dir = data_dir
         self.ensure_data_dir()
     
     def ensure_data_dir(self):

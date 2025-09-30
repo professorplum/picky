@@ -4,8 +4,14 @@ Comprehensive CRUD Operations Test for Cosmos DB
 Tests all Create, Read, Update, Delete operations
 """
 import os
+import sys
+from pathlib import Path
+
+# Add parent directory to path to import from backend
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from dotenv import load_dotenv
-from cosmos_data_layer import CosmosDataLayer
+from backend.cosmos_data_layer import CosmosDataLayer
 
 
 def test_crud_operations():
