@@ -275,39 +275,49 @@ class CosmosDataLayer:
         except exceptions.CosmosHttpResponseError as e:
             raise RuntimeError(f"Failed to update shopping item: {e}")
     
-    def update_larder_item(self, item_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
-        """Update a larder item in Cosmos DB"""
+    def _update_item(self, container_name: str, item_id: str, updates: Dict[str, Any], success_message: str, not_found_message: str, error_context: str) -> Dict[str, Any]:
+        """Helper to update an item in a specified container"""
         try:
-            container = self.containers["larder_items"]
-            
+            container = self.containers[container_name]
+
             # Read existing item
             existing_item = container.read_item(item=item_id, partition_key=item_id)
-            
+
             # Apply updates
             for key, value in updates.items():
                 if key not in ['id']:  # Don't allow ID changes
                     existing_item[key] = value
-            
+
             existing_item['modifiedAt'] = datetime.utcnow().isoformat()
-            
+
             # Replace item
             updated_item = container.replace_item(item=existing_item, body=existing_item)
-            
+
             # Clean response
-            clean_item = {k: v for k, v in updated_item.items() 
+            clean_item = {k: v for k, v in updated_item.items()
                          if not k.startswith('_') and k != 'ttl'}
-            
+
             return {
                 "success": True,
-                "message": "Inventory item updated successfully",
+                "message": success_message,
                 "item": clean_item
             }
-            
+
         except exceptions.CosmosResourceNotFoundError:
-            return {"success": False, "message": "Inventory item not found"}
+            return {"success": False, "message": not_found_message}
         except exceptions.CosmosHttpResponseError as e:
-            raise RuntimeError(f"Failed to update larder item: {e}")
-    
+            raise RuntimeError(f"Failed to update {error_context}: {e}")
+
+    def update_larder_item(self, item_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+        """Update a larder item in Cosmos DB"""
+        return self._update_item(
+            container_name="larder_items",
+            item_id=item_id,
+            updates=updates,
+            success_message="Inventory item updated successfully",
+            not_found_message="Inventory item not found",
+            error_context="larder item"
+        )
     def update_meal_item(self, item_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
         """Update a meal item in Cosmos DB"""
         try:
