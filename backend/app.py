@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
+from pathlib import Path
 import os
 import sys
 
@@ -20,17 +21,17 @@ else:
 # Load environment variables from .env file (if it exists)
 load_dotenv()
 
-# Determine paths for Flask app
+# Determine paths for Flask app using pathlib for robust path handling
 # Frontend directory is one level up from backend, then into frontend/
-backend_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(backend_dir)
-frontend_dir = os.path.join(project_root, 'frontend')
+backend_dir = Path(__file__).resolve().parent
+project_root = backend_dir.parent
+frontend_dir = project_root / 'frontend'
 
 # Create Flask app with frontend as both template and static folder
 app = Flask(__name__, 
-            static_folder=frontend_dir,
+            static_folder=str(frontend_dir),
             static_url_path='/static',
-            template_folder=frontend_dir)
+            template_folder=str(frontend_dir))
 config_class = get_config()
 app.config.from_object(config_class)
 
@@ -66,12 +67,12 @@ else:
 @app.route('/')
 def index():
     """Serve the main HTML page"""
-    return send_from_directory(frontend_dir, 'index.html')
+    return send_from_directory(str(frontend_dir), 'index.html')
 
 @app.route('/favicon.ico')
 def favicon():
     """Serve favicon from frontend directory"""
-    return send_from_directory(frontend_dir, 'favicon.ico')
+    return send_from_directory(str(frontend_dir), 'favicon.ico')
 
 @app.route('/api/health', methods=['GET'])
 def health():
