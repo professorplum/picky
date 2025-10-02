@@ -148,7 +148,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Run the application
-python -m backend.run
+python -m backend.run  # By default, this starts the server on port 5001
 
 # Or use the development script
 ./run-dev.sh
