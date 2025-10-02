@@ -3,6 +3,8 @@ Configuration classes for different environments
 Simplified for Cosmos DB only
 """
 import os
+from typing import Optional
+from .secrets_service import get_secrets_service
 
 
 class Config:
@@ -14,25 +16,61 @@ class Config:
     DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes', 'on')
     HOST = os.environ.get('HOST', '0.0.0.0')
     
-    # Cosmos DB configuration (REQUIRED)
-    COSMOS_ENDPOINT = os.environ.get('COSMOS_ENDPOINT')
-    COSMOS_KEY = os.environ.get('COSMOS_KEY')
-    COSMOS_DATABASE = os.environ.get('COSMOS_DATABASE', 'picky')
+    # Azure Key Vault configuration
+    KEY_VAULT_URL = os.environ.get('KEY_VAULT_URL')
+    APP_NAME = os.environ.get('APP_NAME', 'picky')
+    
+    # Cosmos DB configuration - will be loaded from Key Vault
+    COSMOS_CONNECTION_STRING: Optional[str] = None
+    COSMOS_DATABASE: Optional[str] = None
+    COSMOS_CONTAINER: Optional[str] = None
     
     # CORS settings
     CORS_ORIGINS = os.environ.get('CORS_ORIGINS', '*')
+    
+    def __init__(self):
+        """Initialize configuration and load secrets from Key Vault"""
+        self._load_cosmos_config()
+    
+    def _load_cosmos_config(self):
+        """Load Cosmos DB configuration from Key Vault"""
+        try:
+            # Get environment name for secret lookup
+            env_name = self._get_environment_name()
+            
+            # Initialize secrets service
+            secrets_service = get_secrets_service()
+            
+            # Load Cosmos DB configuration
+            self.COSMOS_CONNECTION_STRING = secrets_service.get_cosmos_connection_string(env_name)
+            self.COSMOS_DATABASE = secrets_service.get_database_name(self.APP_NAME, env_name)
+            self.COSMOS_CONTAINER = secrets_service.get_container_name(env_name)
+            
+        except Exception as e:
+            # Log the error and set connection to None for graceful handling
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to load Cosmos DB configuration: {e}")
+            
+            # Set to None so the app can detect and handle the error gracefully
+            self.COSMOS_CONNECTION_STRING = None
+            self.COSMOS_DATABASE = None
+            self.COSMOS_CONTAINER = None
+    
+    def _get_environment_name(self) -> str:
+        """Get environment name for secret lookup"""
+        env_mapping = {
+            'Development': 'dev',
+            'Staging': 'stage', 
+            'Production': 'prod'
+        }
+        return env_mapping.get(self.ENV_NAME, 'dev')
 
 
 class DevelopmentConfig(Config):
     """Development environment configuration"""
     ENV_NAME = 'Development'
     DEBUG = True
-    
-    # Cosmos DB settings - must be provided via environment variables
-    # No defaults to ensure explicit configuration
-    COSMOS_ENDPOINT = os.environ.get('COSMOS_ENDPOINT')
-    COSMOS_KEY = os.environ.get('COSMOS_KEY')
-    COSMOS_DATABASE = os.environ.get('COSMOS_DATABASE', 'picky-dev')
     
     # Specific ports for local development security
     CORS_ORIGINS = ['http://localhost:5001', 'http://127.0.0.1:5001']

@@ -7,6 +7,7 @@ import os
 # Import from backend package (works with editable install)
 from backend.cosmos_data_layer import CosmosDataLayer
 from backend.config import get_config
+from backend.database_service import get_database_service, initialize_database
 
 # Load environment variables from .env file (if it exists)
 load_dotenv()
@@ -28,27 +29,53 @@ app.config.from_object(config_class)
 # Configure CORS based on environment
 CORS(app, origins=app.config.get('CORS_ORIGINS', '*'))
 
-# Initialize Cosmos DB data layer - fail gracefully if configuration is missing
+# Initialize database service with new architecture
 try:
-    endpoint = app.config.get('COSMOS_ENDPOINT')
-    key = app.config.get('COSMOS_KEY')
-    database = app.config.get('COSMOS_DATABASE')
+    # Initialize the new database service
+    db_connected = initialize_database()
+    if db_connected:
+        print("Successfully initialized Cosmos DB connection with new architecture")
+    else:
+        print("Failed to initialize Cosmos DB connection")
     
-    if not endpoint or not key or not database:
-        raise ValueError("Cosmos DB configuration missing. Set COSMOS_ENDPOINT, COSMOS_KEY, and COSMOS_DATABASE environment variables.")
-    
-    data_layer = CosmosDataLayer(endpoint, key, database)
-    print(f"Successfully initialized Cosmos DB connection: {database}")
+    # Keep the old data layer for backward compatibility (will be updated later)
+    data_layer = None
     
 except Exception as e:
-    print(f"Failed to initialize Cosmos DB: {e}")
-    print("App will fail gracefully when attempting to use data layer")
+    print(f"Failed to initialize database service: {e}")
+    print("App will fail gracefully when attempting to use database")
     data_layer = None
 
 @app.route('/')
 def index():
     """Serve the main HTML page"""
     return send_from_directory(str(frontend_dir), 'index.html')
+
+@app.route('/api/health')
+def health_check():
+    """Health check endpoint for database connection"""
+    try:
+        db_service = get_database_service()
+        health_status = db_service.get_health_status()
+        
+        if health_status['connected']:
+            return jsonify({
+                "status": "healthy",
+                "database": health_status,
+                "message": "Database connection is healthy"
+            }), 200
+        else:
+            return jsonify({
+                "status": "unhealthy", 
+                "database": health_status,
+                "message": f"Database connection failed: {health_status.get('error', 'Unknown error')}"
+            }), 503
+            
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": f"Health check failed: {str(e)}"
+        }), 500
 
 @app.route('/favicon.ico')
 def favicon():
