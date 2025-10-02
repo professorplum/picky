@@ -601,7 +601,7 @@ function renderMealTable() {
 
 async function addMealItem() {
   const newItem = {
-    id: crypto.randomUUID(),
+    id: 'temp-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
     name: '',
     ingredients: '',
     saved: false
