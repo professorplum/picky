@@ -258,7 +258,7 @@ function escapeHtml(text) {
 
 async function addShoppingItem() {
   const newItem = {
-    id: Date.now(),
+    id: crypto.randomUUID(),
     name: '',
     checked: false,
     saved: false
@@ -308,25 +308,21 @@ async function clearCompletedItems() {
   if (confirm(`Clear ${completedItems.length} completed item(s)?`)) {
     shoppingItems = shoppingItems.filter(item => !item.checked);
     renderShoppingTable();
-
-    // Persist changes to backend by saving the updated shopping items
-    try {
-      const response = await fetch(`${API_BASE}/shopping-items`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(shoppingItems)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to persist cleared items');
+    showStatus(`Cleared ${completedItems.length} completed item(s)`, 'success');
+    
+    // Delete saved items from the server
+    const savedCompletedItems = completedItems.filter(item => item.saved && item.id);
+    for (const item of savedCompletedItems) {
+      try {
+        const response = await fetch(`${API_BASE}/shopping-items/${item.id}`, {
+          method: 'DELETE'
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to delete ${item.name} from server`);
+        }
+      } catch (error) {
+        console.error(`Failed to delete ${item.name} from server:`, error);
       }
-
-      showStatus(`Cleared ${completedItems.length} completed item(s)`, 'success');
-    } catch (error) {
-      console.error('Failed to persist cleared items:', error);
-      showStatus('Items cleared locally but failed to save to server', 'error');
     }
   }
 }
@@ -485,6 +481,21 @@ async function clearReorderItems() {
     larderItems = larderItems.filter(item => !item.reorder);
     renderLarderTable();
     showStatus(`Cleared ${reorderItems.length} reorder item(s)`, 'success');
+    
+    // Delete saved items from the server
+    const savedReorderItems = reorderItems.filter(item => item.saved && item.id);
+    for (const item of savedReorderItems) {
+      try {
+        const response = await fetch(`${API_BASE}/larder-items/${item.id}`, {
+          method: 'DELETE'
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to delete ${item.name} from server`);
+        }
+      } catch (error) {
+        console.error(`Failed to delete ${item.name} from server:`, error);
+      }
+    }
   }
 }
 
@@ -590,7 +601,7 @@ function renderMealTable() {
 
 async function addMealItem() {
   const newItem = {
-    id: Date.now(),
+    id: crypto.randomUUID(),
     name: '',
     ingredients: '',
     saved: false
