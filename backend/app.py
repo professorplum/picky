@@ -5,9 +5,9 @@ from pathlib import Path
 import os
 
 # Import from backend package (works with editable install)
-from backend.cosmos_data_layer import CosmosDataLayer
 from backend.config import get_config
 from backend.database_service import get_database_service, initialize_database
+from backend.data_layer import DataLayer
 
 # Load environment variables from .env file (if it exists)
 load_dotenv()
@@ -35,11 +35,13 @@ try:
     db_connected = initialize_database()
     if db_connected:
         print("Successfully initialized Cosmos DB connection with new architecture")
+        
+        # Initialize the new data layer
+        data_layer = DataLayer()
+        print("Successfully initialized new data layer")
     else:
         print("Failed to initialize Cosmos DB connection")
-    
-    # Keep the old data layer for backward compatibility (will be updated later)
-    data_layer = None
+        data_layer = None
     
 except Exception as e:
     print(f"Failed to initialize database service: {e}")
@@ -108,6 +110,13 @@ def check_data_layer():
             "error": "Database connection not available. Please check Cosmos DB configuration.",
             "status": "database_error"
         }), 503
+    
+    # Check if data layer is connected
+    if not data_layer.db_service.is_connected():
+        return jsonify({
+            "error": "Database connection lost",
+            "status": "database_error"
+        }), 503
     return None
 
 # === Larder Liszt (Inventory) ===
@@ -151,8 +160,11 @@ def get_shopping_items():
         return error_response
     
     try:
-        items = data_layer.get_shopping_items()
-        return jsonify(items)
+        result = data_layer.get_shopping_items()
+        if result.get("success"):
+            return jsonify(result["items"])
+        else:
+            return jsonify({"error": result.get("error", "Failed to get shopping items")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -172,7 +184,10 @@ def add_shopping_item():
             return jsonify({"error": "Item name is required"}), 400
         
         result = data_layer.add_shopping_item(item_data)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify(result["item"])
+        else:
+            return jsonify({"error": result.get("error", "Failed to add shopping item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

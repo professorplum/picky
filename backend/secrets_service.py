@@ -29,7 +29,6 @@ class SecretsService:
         # Initialize Azure credential and Key Vault client
         self.credential = DefaultAzureCredential()
         self.client = SecretClient(vault_url=self.vault_url, credential=self.credential)
-        
         logger.info(f"SecretsService initialized for vault: {self.vault_url}")
     
     def get_secret(self, secret_name: str) -> str:

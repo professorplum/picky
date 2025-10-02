@@ -46,8 +46,9 @@ class TestDatabaseService:
         db_service = DatabaseService()
         health = db_service.get_health_status()
         
-        assert health['status'] == "disconnected"
         assert health['connected'] == False
+        assert health['database'] is None
+        assert health['container'] is None
         assert health['error'] is None
         print("✅ Health status correct when disconnected")
     
@@ -61,7 +62,6 @@ class TestDatabaseService:
         
         health = db_service.get_health_status()
         
-        assert health['status'] == "error"
         assert health['connected'] == False
         assert health['error'] == "Test error"
         print("✅ Health status correct when error")

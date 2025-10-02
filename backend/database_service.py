@@ -15,7 +15,8 @@ class DatabaseService:
     
     def __init__(self):
         """Initialize the database service"""
-        self.config = get_config()
+        config_class = get_config()
+        self.config = config_class()
         self.client: Optional[CosmosClient] = None
         self.database = None
         self.container = None

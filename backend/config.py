@@ -110,4 +110,7 @@ config_map = {
 def get_config():
     """Get the appropriate configuration class based on ENV_NAME"""
     env_name = os.environ.get('ENV_NAME', 'Development')
-    return config_map.get(env_name, DevelopmentConfig)
+    print(f"🔧 get_config() called with ENV_NAME: {env_name}")
+    config_class = config_map.get(env_name, DevelopmentConfig)
+    print(f"🔧 Using config class: {config_class.__name__}")
+    return config_class
