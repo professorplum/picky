@@ -1,180 +1,205 @@
-import json
-import os
-from datetime import datetime
+"""
+Modern data layer using the new database service architecture
+Provides clean interface for all CRUD operations
+"""
+import logging
 from typing import Dict, List, Any, Optional
+from datetime import datetime
+from .database_service import get_database_service
+from azure.cosmos import exceptions
+
+logger = logging.getLogger(__name__)
+
 
 class DataLayer:
     """
-    Extensible data layer that starts with JSON files but can be easily
-    extended to support MongoDB Atlas and later Cosmos DB.
+    Modern data layer using the new database service architecture.
+    Provides clean interface for all CRUD operations with proper error handling.
     """
     
-    def __init__(self, data_dir: str = "data"):
-        # If relative path, make it relative to project root (not backend/)
-        if not os.path.isabs(data_dir):
-            self.data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), data_dir)
-        else:
-            self.data_dir = data_dir
-        self.ensure_data_dir()
+    def __init__(self):
+        """Initialize the data layer"""
+        self.db_service = get_database_service()
+        self.container = None
+        self._ensure_connected()
     
-    def ensure_data_dir(self):
-        """Create data directory if it doesn't exist - fail if unable to create"""
+    def _ensure_connected(self):
+        """Ensure database connection is established"""
+        if not self.db_service.is_connected():
+            if not self.db_service.connect():
+                raise Exception("Failed to connect to database")
+        
+        self.container = self.db_service.get_container()
+        if not self.container:
+            raise Exception("Database container not available")
+        
+        # Log connection details
+        health = self.db_service.get_health_status()
+        logger.info(f"DataLayer connected to: {health['database']}/{health['container']}")
+    
+    def _handle_database_error(self, operation: str, error: Exception) -> Dict[str, Any]:
+        """Handle database errors gracefully"""
+        logger.error(f"Database error in {operation}: {error}")
+        return {
+            "success": False,
+            "error": f"Database operation failed: {str(error)}",
+            "operation": operation
+        }
+    
+    def _create_item(self, item_data: Dict[str, Any], item_type: str) -> Dict[str, Any]:
+        """Create a new item in the database"""
         try:
-            os.makedirs(self.data_dir, exist_ok=True)
-        except OSError as e:
-            raise OSError(f"Failed to create data directory '{self.data_dir}': {e}")
+            self._ensure_connected()
+            
+            # Add metadata
+            item_data.update({
+                "id": item_data.get("id", f"{item_type}_{datetime.now().isoformat()}"),
+                "type": item_type,
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat()
+            })
+            
+            # Create item in Cosmos DB
+            result = self.container.create_item(item_data)
+            
+            logger.info(f"Successfully created {item_type} item: {result['id']}")
+            return {
+                "success": True,
+                "item": result,
+                "message": f"{item_type.title()} item created successfully"
+            }
+            
+        except Exception as e:
+            return self._handle_database_error(f"create_{item_type}", e)
     
-    def _get_file_path(self, filename: str) -> str:
-        """Get full path for a data file"""
-        return os.path.join(self.data_dir, f"{filename}.json")
+    def _get_items(self, item_type: str) -> Dict[str, Any]:
+        """Get all items of a specific type"""
+        try:
+            self._ensure_connected()
+            
+            # Query for items of this type
+            query = "SELECT * FROM c WHERE c.type = @type"
+            parameters = [{"name": "@type", "value": item_type}]
+            
+            items = list(self.container.query_items(
+                query=query,
+                parameters=parameters,
+                enable_cross_partition_query=True
+            ))
+            
+            logger.info(f"Retrieved {len(items)} {item_type} items")
+            return {
+                "success": True,
+                "items": items,
+                "count": len(items)
+            }
+            
+        except Exception as e:
+            return self._handle_database_error(f"get_{item_type}", e)
     
-    def _read_json_file(self, filename: str) -> Dict[str, Any]:
-        """Read JSON file, return empty dict if file doesn't exist"""
-        file_path = self._get_file_path(filename)
-        if os.path.exists(file_path):
+    def _update_item(self, item_id: str, update_data: Dict[str, Any], item_type: str) -> Dict[str, Any]:
+        """Update an existing item"""
+        try:
+            self._ensure_connected()
+            
+            # Get existing item
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except (json.JSONDecodeError, IOError) as e:
-                print(f"Error reading {file_path}: {e}")
-                return {}
-        return {}
+                existing_item = self.container.read_item(item_id, partition_key=item_id)
+            except exceptions.CosmosResourceNotFoundError:
+                return {
+                    "success": False,
+                    "error": f"{item_type.title()} item not found",
+                    "item_id": item_id
+                }
+            
+            # Update fields
+            existing_item.update(update_data)
+            existing_item["updated_at"] = datetime.now().isoformat()
+            
+            # Save updated item
+            result = self.container.replace_item(item_id, existing_item)
+            
+            logger.info(f"Successfully updated {item_type} item: {item_id}")
+            return {
+                "success": True,
+                "item": result,
+                "message": f"{item_type.title()} item updated successfully"
+            }
+            
+        except Exception as e:
+            return self._handle_database_error(f"update_{item_type}", e)
     
-    def _write_json_file(self, filename: str, data: Dict[str, Any]) -> None:
-        """Write data to JSON file - fail if unable to write"""
-        file_path = self._get_file_path(filename)
+    def _delete_item(self, item_id: str, item_type: str) -> Dict[str, Any]:
+        """Delete an item"""
         try:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-        except (IOError, OSError) as e:
-            raise IOError(f"Failed to write {file_path}: {e}")
+            self._ensure_connected()
+            
+            # Delete item
+            self.container.delete_item(item_id, partition_key=item_id)
+            
+            logger.info(f"Successfully deleted {item_type} item: {item_id}")
+            return {
+                "success": True,
+                "message": f"{item_type.title()} item deleted successfully",
+                "item_id": item_id
+            }
+            
+        except exceptions.CosmosResourceNotFoundError:
+            return {
+                "success": False,
+                "error": f"{item_type.title()} item not found",
+                "item_id": item_id
+            }
+        except Exception as e:
+            return self._handle_database_error(f"delete_{item_type}", e)
     
-    # === Larder Liszt (Inventory) Methods ===
-    def get_larder_items(self) -> List[Dict[str, Any]]:
+    # Larder items
+    def get_larder_items(self) -> Dict[str, Any]:
         """Get all larder items"""
-        data = self._read_json_file("larder_items")
-        return data.get("items", [])
+        return self._get_items("larder")
     
     def add_larder_item(self, item_data: Dict[str, Any]) -> Dict[str, Any]:
         """Add a new larder item"""
-        data = self._read_json_file("larder_items")
-        items = data.get("items", [])
-        
-        # Create new item with ID and default values
-        new_item = {
-            "id": self._generate_id(),
-            "name": item_data.get("name", "").strip(),
-            "inStock": item_data.get("inStock", False),
-            "createdAt": datetime.utcnow().isoformat()
-        }
-        
-        if new_item["name"]:
-            items.append(new_item)
-            data = {
-                "items": items,
-                "lastUpdated": datetime.utcnow().isoformat()
-            }
-            
-            self._write_json_file("larder_items", data)
-            return {"success": True, "message": "Larder item added successfully", "item": new_item}
-        else:
-            return {"success": False, "message": "Item name is required"}
-
-    # === Chopin Liszt (Shopping) Methods ===
-    def get_shopping_items(self) -> List[Dict[str, Any]]:
+        return self._create_item(item_data, "larder")
+    
+    def update_larder_item(self, item_id: str, update_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update a larder item"""
+        return self._update_item(item_id, update_data, "larder")
+    
+    def delete_larder_item(self, item_id: str) -> Dict[str, Any]:
+        """Delete a larder item"""
+        return self._delete_item(item_id, "larder")
+    
+    # Shopping items
+    def get_shopping_items(self) -> Dict[str, Any]:
         """Get all shopping items"""
-        data = self._read_json_file("shopping_items")
-        return data.get("items", [])
+        return self._get_items("shopping")
     
     def add_shopping_item(self, item_data: Dict[str, Any]) -> Dict[str, Any]:
         """Add a new shopping item"""
-        data = self._read_json_file("shopping_items")
-        items = data.get("items", [])
-        
-        # Create new item with ID and default values
-        new_item = {
-            "id": self._generate_id(),
-            "name": item_data.get("name", "").strip(),
-            "inCart": item_data.get("inCart", False),
-            "createdAt": datetime.utcnow().isoformat()
-        }
-        
-        if new_item["name"]:
-            items.append(new_item)
-            data = {
-                "items": items,
-                "lastUpdated": datetime.utcnow().isoformat()
-            }
-            
-            self._write_json_file("shopping_items", data)
-            return {"success": True, "message": "Shopping item added successfully", "item": new_item}
-        else:
-            return {"success": False, "message": "Item name is required"}
-
-    # === Meals Methods ===
-    def get_meal_items(self) -> List[Dict[str, Any]]:
+        return self._create_item(item_data, "shopping")
+    
+    def update_shopping_item(self, item_id: str, update_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update a shopping item"""
+        return self._update_item(item_id, update_data, "shopping")
+    
+    def delete_shopping_item(self, item_id: str) -> Dict[str, Any]:
+        """Delete a shopping item"""
+        return self._delete_item(item_id, "shopping")
+    
+    # Meal items
+    def get_meal_items(self) -> Dict[str, Any]:
         """Get all meal items"""
-        data = self._read_json_file("meal_items")
-        return data.get("items", [])
+        return self._get_items("meal")
     
     def add_meal_item(self, meal_data: Dict[str, Any]) -> Dict[str, Any]:
         """Add a new meal item"""
-        data = self._read_json_file("meal_items")
-        items = data.get("items", [])
-        
-        # Create new meal with ID and default values
-        new_meal = {
-            "id": self._generate_id(),
-            "name": meal_data.get("name", "").strip(),
-            "ingredients": meal_data.get("ingredients", "").strip(),
-            "createdAt": datetime.utcnow().isoformat()
-        }
-        
-        if new_meal["name"]:
-            items.append(new_meal)
-            data = {
-                "items": items,
-                "lastUpdated": datetime.utcnow().isoformat()
-            }
-            
-            self._write_json_file("meal_items", data)
-            return {"success": True, "message": "Meal added successfully", "item": new_meal}
-        else:
-            return {"success": False, "message": "Meal name is required"}
-
-
-    def _generate_id(self) -> str:
-        """Generate a unique ID using timestamp + random component to prevent collisions"""
-        import random
-        timestamp = int(datetime.utcnow().timestamp() * 1000)
-        random_suffix = random.randint(1000, 9999)
-        return f"{timestamp}-{random_suffix}"
-
-
-# Future: MongoDB Atlas Data Layer
-class MongoDBDataLayer(DataLayer):
-    """
-    Future implementation for MongoDB Atlas
-    This will replace the JSON file operations with MongoDB operations
-    """
+        return self._create_item(meal_data, "meal")
     
-    def __init__(self, connection_string: str, database_name: str = "picky"):
-        # TODO: Implement MongoDB connection
-        # self.client = pymongo.MongoClient(connection_string)
-        # self.db = self.client[database_name]
-        super().__init__()
-        print("MongoDB DataLayer not yet implemented")
-
-
-# Future: Cosmos DB Data Layer  
-class CosmosDBDataLayer(DataLayer):
-    """
-    Future implementation for Azure Cosmos DB
-    This will replace the JSON file operations with Cosmos DB operations
-    """
+    def update_meal_item(self, item_id: str, update_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update a meal item"""
+        return self._update_item(item_id, update_data, "meal")
     
-    def __init__(self, connection_string: str):
-        # TODO: Implement Cosmos DB connection
-        # self.client = CosmosClient.from_connection_string(connection_string)
-        super().__init__()
-        print("Cosmos DB DataLayer not yet implemented")
+    def delete_meal_item(self, item_id: str) -> Dict[str, Any]:
+        """Delete a meal item"""
+        return self._delete_item(item_id, "meal")
