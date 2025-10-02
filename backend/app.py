@@ -114,8 +114,11 @@ def get_larder_items():
         return error_response
     
     try:
-        items = data_layer.get_larder_items()
-        return jsonify(items)
+        result = data_layer.get_larder_items()
+        if result.get("success"):
+            return jsonify(result["items"])
+        else:
+            return jsonify({"error": result.get("error", "Failed to get larder items")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -135,7 +138,10 @@ def add_larder_item():
             return jsonify({"error": "Item name is required"}), 400
         
         result = data_layer.add_larder_item(item_data)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify(result["item"])
+        else:
+            return jsonify({"error": result.get("error", "Failed to add larder item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -186,8 +192,11 @@ def get_meal_items():
         return error_response
     
     try:
-        items = data_layer.get_meal_items()
-        return jsonify(items)
+        result = data_layer.get_meal_items()
+        if result.get("success"):
+            return jsonify(result["items"])
+        else:
+            return jsonify({"error": result.get("error", "Failed to get meal items")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -207,7 +216,10 @@ def add_meal_item():
             return jsonify({"error": "Meal name is required"}), 400
         
         result = data_layer.add_meal_item(meal_data)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify(result["item"])
+        else:
+            return jsonify({"error": result.get("error", "Failed to add meal item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -224,7 +236,10 @@ def update_larder_item(item_id):
             return jsonify({"error": "Invalid JSON data"}), 400
         
         result = data_layer.update_larder_item(item_id, update_data)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify(result["item"])
+        else:
+            return jsonify({"error": result.get("error", "Failed to update larder item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -240,7 +255,10 @@ def update_shopping_item(item_id):
             return jsonify({"error": "Invalid JSON data"}), 400
         
         result = data_layer.update_shopping_item(item_id, update_data)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify(result["item"])
+        else:
+            return jsonify({"error": result.get("error", "Failed to update shopping item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -256,7 +274,10 @@ def update_meal_item(item_id):
             return jsonify({"error": "Invalid JSON data"}), 400
         
         result = data_layer.update_meal_item(item_id, update_data)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify(result["item"])
+        else:
+            return jsonify({"error": result.get("error", "Failed to update meal item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -269,7 +290,10 @@ def delete_larder_item(item_id):
     
     try:
         result = data_layer.delete_larder_item(item_id)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify({"message": result.get("message", "Larder item deleted successfully")})
+        else:
+            return jsonify({"error": result.get("error", "Failed to delete larder item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -281,7 +305,10 @@ def delete_shopping_item(item_id):
     
     try:
         result = data_layer.delete_shopping_item(item_id)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify({"message": result.get("message", "Shopping item deleted successfully")})
+        else:
+            return jsonify({"error": result.get("error", "Failed to delete shopping item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -293,7 +320,10 @@ def delete_meal_item(item_id):
     
     try:
         result = data_layer.delete_meal_item(item_id)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify({"message": result.get("message", "Meal item deleted successfully")})
+        else:
+            return jsonify({"error": result.get("error", "Failed to delete meal item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

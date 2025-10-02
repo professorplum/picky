@@ -7,6 +7,7 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime
 from .database_service import get_database_service
 from azure.cosmos import exceptions
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -46,21 +47,36 @@ class DataLayer:
             "operation": operation
         }
     
+    def _generate_id(self) -> str:
+        """Generate a unique ID using timestamp + random component to prevent collisions"""
+        timestamp = int(datetime.now().timestamp() * 1000)
+        random_suffix = random.randint(1000, 9999)
+        return f"{timestamp}-{random_suffix}"
+    
     def _create_item(self, item_data: Dict[str, Any], item_type: str) -> Dict[str, Any]:
         """Create a new item in the database"""
         try:
             self._ensure_connected()
             
-            # Add metadata
-            item_data.update({
-                "id": item_data.get("id", f"{item_type}_{datetime.now().isoformat()}"),
+            # Create item with proper field mapping based on type
+            new_item = {
+                "id": self._generate_id(),
+                "name": item_data.get("name", "").strip(),
                 "type": item_type,
-                "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat()
-            })
+                "createdAt": datetime.now().isoformat(),
+                "modifiedAt": datetime.now().isoformat()
+            }
+            
+            # Add type-specific fields
+            if item_type == "shopping":
+                new_item["inCart"] = item_data.get("inCart", False)
+            elif item_type == "larder":
+                new_item["reorder"] = item_data.get("reorder", False)
+            elif item_type == "meal":
+                new_item["ingredients"] = item_data.get("ingredients", "")
             
             # Create item in Cosmos DB
-            result = self.container.create_item(item_data)
+            result = self.container.create_item(new_item)
             
             logger.info(f"Successfully created {item_type} item: {result['id']}")
             return {
@@ -112,9 +128,12 @@ class DataLayer:
                     "item_id": item_id
                 }
             
-            # Update fields
-            existing_item.update(update_data)
-            existing_item["updated_at"] = datetime.now().isoformat()
+            # Update fields with proper mapping
+            for key, value in update_data.items():
+                if key not in ['id', 'type']:  # Don't allow ID or type changes
+                    existing_item[key] = value
+            
+            existing_item["modifiedAt"] = datetime.now().isoformat()
             
             # Save updated item
             result = self.container.replace_item(item_id, existing_item)

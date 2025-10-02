@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-Test CosmosDB connection and container creation
+DEPRECATED: This test file references the removed CosmosDataLayer
+Use test_data_layer_crud.py instead for current DataLayer testing
 """
 import os
-from dotenv import load_dotenv
-from backend.cosmos_data_layer import CosmosDataLayer
+print("⚠️  WARNING: This test file is deprecated!")
+print("The CosmosDataLayer has been removed. Use test_data_layer_crud.py instead.")
+print("This file will be removed in a future update.")
 
 def test_cosmos_connection():
     """Test CosmosDB connection and container creation"""

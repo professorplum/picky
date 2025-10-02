@@ -6,69 +6,74 @@ This document describes the Cosmos DB schema design for the Picky application, i
 
 ## Container Design
 
-All containers use **flexible `/id` partition key** for maximum adaptability and future schema evolution.
+The application uses a **single container** with **flexible `/id` partition key** for maximum adaptability and future schema evolution. Items are differentiated by a `type` field within the same container.
 
-### Container List
+### Container Configuration
 
 | Container Name | Purpose | Partition Key | Throughput |
 |----------------|---------|---------------|------------|
-| `shopping_items` | Shopping list items | `/id` | Shared (1000 RU/s total) |
-| `larder_items` | Larder/pantry inventory | `/id` | Shared (1000 RU/s total) |
-| `meal_items` | Future meal planning | `/id` | Shared (1000 RU/s total) |
+| `stage-container` | All application data | `/id` | 1000 RU/s |
+
+**Note**: The container name is configurable via environment variables and may vary by deployment environment.
 
 ## Document Schemas
 
 ### Shopping Items (Shopping List)
 
-**Container:** `shopping_items`
+**Container:** Single container (type: `shopping`)
 
 ```json
 {
   "id": "1759017526823-4567",
   "name": "bananas",
+  "type": "shopping",
   "inCart": false,
   "createdAt": "2025-09-28T23:45:18.216071",
-  "modifiedAt": "2025-09-28T23:45:18.216071",
+  "modifiedAt": "2025-09-28T23:45:18.216071"
 }
 ```
 
 **Fields:**
 - `id` (string, required): Unique identifier (timestamp-random)
 - `name` (string, required): Item name
+- `type` (string, required): Item type (`"shopping"`)
 - `inCart` (boolean): Whether item is in shopping cart
 - `createdAt` (string): ISO timestamp when created
 - `modifiedAt` (string): ISO timestamp when last modified
 
 ### Larder Items (Larder/Pantry)
 
-**Container:** `larder_items`
+**Container:** Single container (type: `larder`)
 
 ```json
 {
   "id": "1759016375267-8901",
   "name": "apples",
+  "type": "larder",
   "reorder": false,
   "createdAt": "2025-09-28T23:45:18.216071",
-  "modifiedAt": "2025-09-28T23:45:18.216071",
+  "modifiedAt": "2025-09-28T23:45:18.216071"
 }
 ```
 
 **Fields:**
 - `id` (string, required): Unique identifier
 - `name` (string, required): Item name
+- `type` (string, required): Item type (`"larder"`)
 - `reorder` (boolean): Whether item needs reordering
 - `createdAt` (string): ISO timestamp when created
 - `modifiedAt` (string): ISO timestamp when last modified
 
-### Meal Items (Future)
+### Meal Items
 
-**Container:** `meal_items`
+**Container:** Single container (type: `meal`)
 
 ```json
 {
-  "id": "meal-12345-6789",
-  "name": "Spaghetti Carbonara",
-  "ingredients": "pasta, eggs, bacon, parmesan",
+  "id": "1759016375267-8901",
+  "name": "Chicken Stir Fry",
+  "type": "meal",
+  "ingredients": "chicken, vegetables, soy sauce",
   "createdAt": "2025-09-28T23:45:18.216071",
   "modifiedAt": "2025-09-28T23:45:18.216071"
 }
@@ -77,9 +82,25 @@ All containers use **flexible `/id` partition key** for maximum adaptability and
 **Fields:**
 - `id` (string, required): Unique identifier
 - `name` (string, required): Meal name
-- `ingredients` (string): Comma-separated ingredients list
+- `type` (string, required): Item type (`"meal"`)
+- `ingredients` (string): List of ingredients
 - `createdAt` (string): ISO timestamp when created
 - `modifiedAt` (string): ISO timestamp when last modified
+
+## Query Patterns
+
+Since all items are stored in a single container, queries use the `type` field to filter items:
+
+```sql
+-- Get all shopping items
+SELECT * FROM c WHERE c.type = "shopping"
+
+-- Get all larder items
+SELECT * FROM c WHERE c.type = "larder"
+
+-- Get all meal items
+SELECT * FROM c WHERE c.type = "meal"
+```
 
 ## ID Generation Strategy
 
