@@ -24,13 +24,14 @@
         <section class="dashboard-section pantry-section">
           <h2>Larder Liszt</h2>
           <div class="section-controls">
-            <button class="btn">Add Item</button>
+            <button class="btn" id="addLarderItem">Add Item</button>
+            <button class="btn" id="clearReorder">Clear Reorder</button>
           </div>
           <table class="section-table">
             <thead>
               <tr>
                 <th>Item</th>
-                <th>In Stock</th>
+                <th>Reorder</th>
               </tr>
             </thead>
             <tbody id="pantryTableBody">
@@ -70,18 +71,20 @@
       <section class="dashboard-section meals-section">
         <h2>Meals</h2>
         <div class="section-controls">
-          <button class="btn">Add Meal</button>
+          <button class="btn" id="addMealItem">Add Meal</button>
         </div>
         <table class="section-table">
           <thead>
             <tr>
               <th>Meal</th>
               <th>Ingredients</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody id="mealsTableBody">
             <tr class="empty-state">
               <td class="empty-message">No meals yet</td>
+              <td></td>
               <td></td>
             </tr>
           </tbody>
