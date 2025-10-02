@@ -7,6 +7,7 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime
 from .database_service import get_database_service
 from azure.cosmos import exceptions
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,6 @@ class DataLayer:
     
     def _generate_id(self) -> str:
         """Generate a unique ID using timestamp + random component to prevent collisions"""
-        import random
         timestamp = int(datetime.now().timestamp() * 1000)
         random_suffix = random.randint(1000, 9999)
         return f"{timestamp}-{random_suffix}"
