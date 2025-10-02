@@ -12,8 +12,7 @@ The architecture is composed of several key components working together:
     -   **GitHub Actions**: Provides Continuous Integration (CI) by automatically running quality checks (like linting and testing) on every Pull Request before it can be merged into the `stage` branch.
     -   **Azure App Service (Deployment Center)**: Provides Continuous Deployment (CD) by monitoring the `stage` and `main` branches in GitHub. Changes merged to these branches are automatically deployed to the corresponding environment.
 -   **Data Storage**:
-    -   **Local File System (`/data` folder)**: For the current phase, the application reads and writes data to JSON files stored in a `data` directory.
-    -   **Important Note**: This data storage is ephemeral. The contents of the `/data` folder are **not guaranteed to persist** across deployments or application restarts in Azure App Service. This is acceptable for the current proof-of-concept stage, but a persistent data solution (e.g., Azure Cosmos DB, Azure Database for PostgreSQL) will be required for future development.
+    -   **Azure Cosmos DB**: The application uses Azure Cosmos DB for persistent, scalable data storage across all environments. This provides reliable data persistence and supports automatic scaling based on demand.
 
 ## Environments
 

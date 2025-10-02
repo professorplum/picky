@@ -25,9 +25,9 @@ def main():
         else:
             port = 5001
 
-    print("Picky - Local Development")
+    print("Picky - Meal Planner")
     print("=" * 50)
-    print("Data will be stored in ./data/ directory")
+    print("Data will be stored in Azure Cosmos DB")
     print(f"Effective port: {port}")
     if not args.no_browser:
         print(f"Opening browser at http://localhost:{port}")

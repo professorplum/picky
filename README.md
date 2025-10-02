@@ -1,18 +1,14 @@
-# Picky - Meal Planner MVP (Local Development)
+# Picky - Meal Planner MVP
 
-Simple meal planner with JSON file backend, easily extensible to MongoDB Atlas and Cosmos DB.
+Simple meal planner with Azure Cosmos DB backend for scalable cloud storage.
 
 ## 🏗️ Architecture
 
 ```
-Local Development:
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   HTML/CSS/JS   │────│   Python Flask   │────│   JSON Files    │
-│   Frontend      │    │   Server         │    │   (Data Layer)  │
+│   HTML/CSS/JS   │────│   Python Flask   │────│   Azure Cosmos  │
+│   Frontend      │    │   Server         │    │   DB (Cloud)     │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
-
-Future Migration Path:
-JSON Files → MongoDB Atlas → Cosmos DB
 ```
 
 ## 🚀 Quick Start
@@ -58,7 +54,7 @@ python -m backend.run --port 3000 --no-browser
 This will:
 - Start the Flask server on the specified port (default: 5001)
 - Automatically open your browser (unless `--no-browser` is used)
-- Create a `data/` directory for JSON files
+- Configure Cosmos DB connection in `.env` file
 
 **Note:** Always activate your virtual environment before running the app!
 
@@ -75,7 +71,6 @@ picky/
 ├── backend/               # Python Flask application
 │   ├── app.py            # Flask server & API routes
 │   ├── config.py         # Environment configurations
-│   ├── data_layer.py     # JSON file data layer
 │   ├── cosmos_data_layer.py  # Cosmos DB data layer
 │   └── run.py            # Startup script
 ├── frontend/              # Static web files
@@ -97,7 +92,7 @@ picky/
 │   ├── development_workflow.md  # Dev workflow guide
 │   ├── COSMOS_SCHEMA.md  # Database schema docs
 │   └── SECURITY_FIX_NOTES.md
-├── data/                  # JSON data files (auto-created)
+├── .env                    # Environment configuration (create from env.example)
 ├── requirements.txt       # Python dependencies
 ├── env.example            # Environment variables template
 └── README.md              # This file
@@ -109,9 +104,9 @@ For detailed architecture and workflow documentation, see the [docs/](docs/) dir
 
 The `DataLayer` class provides a clean abstraction that makes it easy to swap backends:
 
-### Current: JSON Files
+### Current: Azure Cosmos DB
 ```python
-data_layer = DataLayer()  # Uses JSON files in ./data/
+data_layer = CosmosDataLayer(endpoint, key, database)  # Uses Azure Cosmos DB
 ```
 
 ### Future: MongoDB Atlas
@@ -169,8 +164,8 @@ data_layer = CosmosDBDataLayer(connection_string="AccountEndpoint=...")
 
 ## 🔄 Migration Path
 
-### Phase 1: Local Development (Current)
-- ✅ JSON file backend
+### Phase 1: Cloud Development (Current)
+- ✅ Azure Cosmos DB backend
 - ✅ Local Flask server
 - ✅ Simple HTML/CSS/JS frontend
 
@@ -203,15 +198,15 @@ python -m http.server 8000
 # Then visit http://localhost:8000
 ```
 
-### Data Directory
-The app automatically creates a `data/` directory at the project root with JSON files for local storage.
+### Environment Configuration
+The app requires Cosmos DB configuration in your `.env` file. Copy `env.example` to `.env` and configure your Cosmos DB credentials.
 
 ## 🔒 Security Notes
 
 - Currently designed for local development
 - No authentication (single local user)
 - Future versions will add proper auth
-- Data is stored in plain JSON files
+- Data is stored in Azure Cosmos DB
 
 ## 🎯 Features
 
@@ -235,6 +230,6 @@ The app automatically creates a `data/` directory at the project root with JSON 
 
 - **Fast Development** - Get working app in minutes
 - **No Dependencies** - Just Python and a browser
-- **Easy Testing** - All data in readable JSON files
+- **Cloud Storage** - Scalable Azure Cosmos DB backend
 - **Extensible** - Clean migration path to cloud
 - **Simple** - No complex setup or configuration

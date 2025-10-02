@@ -5,7 +5,6 @@ from pathlib import Path
 import os
 
 # Import from backend package (works with editable install)
-from backend.data_layer import DataLayer
 from backend.cosmos_data_layer import CosmosDataLayer
 from backend.config import get_config
 
@@ -29,22 +28,8 @@ app.config.from_object(config_class)
 # Configure CORS based on environment
 CORS(app, origins=app.config.get('CORS_ORIGINS', '*'))
 
-# Initialize data layer based on configuration
-use_local_files = app.config.get('USE_LOCAL_FILES')
-if use_local_files is None:
-    raise ValueError("USE_LOCAL_FILES environment variable must be set to 'true' or 'false'")
-
-# Handle both string and boolean values
-if isinstance(use_local_files, bool):
-    use_local_files = str(use_local_files).lower()
-else:
-    use_local_files = str(use_local_files).lower()
-
-if use_local_files in ('true', '1', 'yes', 'on'):
-    data_layer = DataLayer()
-    print("Using local file storage")
-else:
-    # Use Cosmos DB - fail if configuration is missing
+# Initialize Cosmos DB data layer - fail gracefully if configuration is missing
+try:
     endpoint = app.config.get('COSMOS_ENDPOINT')
     key = app.config.get('COSMOS_KEY')
     database = app.config.get('COSMOS_DATABASE')
@@ -53,7 +38,12 @@ else:
         raise ValueError("Cosmos DB configuration missing. Set COSMOS_ENDPOINT, COSMOS_KEY, and COSMOS_DATABASE environment variables.")
     
     data_layer = CosmosDataLayer(endpoint, key, database)
-    print(f"Using Cosmos DB: {database}")
+    print(f"Successfully initialized Cosmos DB connection: {database}")
+    
+except Exception as e:
+    print(f"Failed to initialize Cosmos DB: {e}")
+    print("App will fail gracefully when attempting to use data layer")
+    data_layer = None
 
 @app.route('/')
 def index():
@@ -68,24 +58,38 @@ def favicon():
 @app.route('/api/health', methods=['GET'])
 def health():
     config_info = {
-        "status": "OK",
-        "message": "Picky API is running",
+        "status": "OK" if data_layer else "ERROR",
+        "message": "Picky API is running" if data_layer else "Database connection failed",
         "env": app.config.get("ENV_NAME"),
         "debug": app.config.get("DEBUG"),
-        "storage_type": "local_files" if app.config.get("USE_LOCAL_FILES") else "cosmos_db"
+        "storage_type": "cosmos_db"
     }
     
-    # Only include data_dir for local file storage
-    if app.config.get("USE_LOCAL_FILES"):
-        config_info["data_dir"] = app.config.get("DATA_DIR")
-    else:
+    if data_layer:
         config_info["database"] = app.config.get("COSMOS_DATABASE")
+        config_info["database_status"] = "connected"
+    else:
+        config_info["database_status"] = "disconnected"
+        config_info["error"] = "Cosmos DB connection not available"
     
     return jsonify(config_info)
+
+def check_data_layer():
+    """Helper function to check if data layer is available"""
+    if data_layer is None:
+        return jsonify({
+            "error": "Database connection not available. Please check Cosmos DB configuration.",
+            "status": "database_error"
+        }), 503
+    return None
 
 # === Larder Liszt (Inventory) ===
 @app.route('/api/larder-items', methods=['GET'])
 def get_larder_items():
+    error_response = check_data_layer()
+    if error_response:
+        return error_response
+    
     try:
         items = data_layer.get_larder_items()
         return jsonify(items)
@@ -94,6 +98,10 @@ def get_larder_items():
 
 @app.route('/api/larder-items', methods=['POST'])
 def add_larder_item():
+    error_response = check_data_layer()
+    if error_response:
+        return error_response
+    
     try:
         item_data = request.get_json()
         if not item_data or not isinstance(item_data, dict):
@@ -111,6 +119,10 @@ def add_larder_item():
 # === Chopin Liszt (Shopping) ===
 @app.route('/api/shopping-items', methods=['GET'])
 def get_shopping_items():
+    error_response = check_data_layer()
+    if error_response:
+        return error_response
+    
     try:
         items = data_layer.get_shopping_items()
         return jsonify(items)
@@ -119,6 +131,10 @@ def get_shopping_items():
 
 @app.route('/api/shopping-items', methods=['POST'])
 def add_shopping_item():
+    error_response = check_data_layer()
+    if error_response:
+        return error_response
+    
     try:
         item_data = request.get_json()
         if not item_data or not isinstance(item_data, dict):
@@ -136,6 +152,10 @@ def add_shopping_item():
 # === Meals ===
 @app.route('/api/meal-items', methods=['GET'])
 def get_meal_items():
+    error_response = check_data_layer()
+    if error_response:
+        return error_response
+    
     try:
         items = data_layer.get_meal_items()
         return jsonify(items)
@@ -144,6 +164,10 @@ def get_meal_items():
 
 @app.route('/api/meal-items', methods=['POST'])
 def add_meal_item():
+    error_response = check_data_layer()
+    if error_response:
+        return error_response
+    
     try:
         meal_data = request.get_json()
         if not meal_data or not isinstance(meal_data, dict):
@@ -161,6 +185,10 @@ def add_meal_item():
 # === Update Operations ===
 @app.route('/api/larder-items/<item_id>', methods=['PUT'])
 def update_larder_item(item_id):
+    error_response = check_data_layer()
+    if error_response:
+        return error_response
+    
     try:
         update_data = request.get_json()
         if not update_data or not isinstance(update_data, dict):
@@ -173,6 +201,10 @@ def update_larder_item(item_id):
 
 @app.route('/api/shopping-items/<item_id>', methods=['PUT'])
 def update_shopping_item(item_id):
+    error_response = check_data_layer()
+    if error_response:
+        return error_response
+    
     try:
         update_data = request.get_json()
         if not update_data or not isinstance(update_data, dict):
@@ -185,6 +217,10 @@ def update_shopping_item(item_id):
 
 @app.route('/api/meal-items/<item_id>', methods=['PUT'])
 def update_meal_item(item_id):
+    error_response = check_data_layer()
+    if error_response:
+        return error_response
+    
     try:
         update_data = request.get_json()
         if not update_data or not isinstance(update_data, dict):
@@ -198,6 +234,10 @@ def update_meal_item(item_id):
 # === Delete Operations ===
 @app.route('/api/larder-items/<item_id>', methods=['DELETE'])
 def delete_larder_item(item_id):
+    error_response = check_data_layer()
+    if error_response:
+        return error_response
+    
     try:
         result = data_layer.delete_larder_item(item_id)
         return jsonify(result)
@@ -206,6 +246,10 @@ def delete_larder_item(item_id):
 
 @app.route('/api/shopping-items/<item_id>', methods=['DELETE'])
 def delete_shopping_item(item_id):
+    error_response = check_data_layer()
+    if error_response:
+        return error_response
+    
     try:
         result = data_layer.delete_shopping_item(item_id)
         return jsonify(result)
@@ -214,6 +258,10 @@ def delete_shopping_item(item_id):
 
 @app.route('/api/meal-items/<item_id>', methods=['DELETE'])
 def delete_meal_item(item_id):
+    error_response = check_data_layer()
+    if error_response:
+        return error_response
+    
     try:
         result = data_layer.delete_meal_item(item_id)
         return jsonify(result)
@@ -230,23 +278,11 @@ def run_server(port=None, debug=None):
     print("🍽️  Starting Picky...")
     print(f"🌍 Environment: {app.config.get('ENV_NAME', 'Unknown')}")
     
-    # Handle data storage setup based on configuration
-    use_local_files = app.config.get('USE_LOCAL_FILES')
-    # Handle both string and boolean values
-    if isinstance(use_local_files, bool):
-        use_local_files = str(use_local_files).lower()
-    else:
-        use_local_files = str(use_local_files).lower()
-    
-    if use_local_files in ('true', '1', 'yes', 'on'):
-        data_dir = app.config.get('DATA_DIR', 'data')
-        # Ensure data_dir is relative to project root, not backend/
-        if not os.path.isabs(data_dir):
-            data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), data_dir)
-        os.makedirs(data_dir, exist_ok=True)
-        print(f"Data storage: Local files in {data_dir}")
-    else:
+    # Display data storage information
+    if data_layer:
         print(f"Data storage: Cosmos DB ({app.config.get('COSMOS_DATABASE', 'picky')})")
+    else:
+        print("Data storage: ERROR - Cosmos DB connection failed")
     
     print(f"Debug mode: {debug}")
     print(f"Server running at http://localhost:{port}")

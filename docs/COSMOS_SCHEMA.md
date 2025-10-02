@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the Cosmos DB schema design for the Picky application, including container structure, document formats, and migration strategy.
+This document describes the Cosmos DB schema design for the Picky application, including container structure and document formats.
 
 ## Container Design
 
@@ -12,9 +12,9 @@ All containers use **flexible `/id` partition key** for maximum adaptability and
 
 | Container Name | Purpose | Partition Key | Throughput |
 |----------------|---------|---------------|------------|
-| `shopping_items` | Shopping list items | `/id` | 400 RU/s |
-| `larder_items` | Larder/pantry inventory | `/id` | 400 RU/s |
-| `meal_items` | Future meal planning | `/id` | 400 RU/s |
+| `shopping_items` | Shopping list items | `/id` | Shared (1000 RU/s total) |
+| `larder_items` | Larder/pantry inventory | `/id` | Shared (1000 RU/s total) |
+| `meal_items` | Future meal planning | `/id` | Shared (1000 RU/s total) |
 
 ## Document Schemas
 
@@ -29,19 +29,15 @@ All containers use **flexible `/id` partition key** for maximum adaptability and
   "inCart": false,
   "createdAt": "2025-09-28T23:45:18.216071",
   "modifiedAt": "2025-09-28T23:45:18.216071",
-  "migratedAt": "2025-09-28T23:45:18.216071",
-  "originalId": 1759017526823
 }
 ```
 
 **Fields:**
-- `id` (string, required): Unique identifier (timestamp-random or migrated from JSON)
+- `id` (string, required): Unique identifier (timestamp-random)
 - `name` (string, required): Item name
 - `inCart` (boolean): Whether item is in shopping cart
 - `createdAt` (string): ISO timestamp when created
 - `modifiedAt` (string): ISO timestamp when last modified
-- `migratedAt` (string, optional): ISO timestamp when migrated from JSON
-- `originalId` (number, optional): Original numeric ID from JSON migration
 
 ### Larder Items (Larder/Pantry)
 
@@ -54,8 +50,6 @@ All containers use **flexible `/id` partition key** for maximum adaptability and
   "reorder": false,
   "createdAt": "2025-09-28T23:45:18.216071",
   "modifiedAt": "2025-09-28T23:45:18.216071",
-  "migratedAt": "2025-09-28T23:45:18.216071",
-  "originalId": 1759016375267
 }
 ```
 
@@ -65,8 +59,6 @@ All containers use **flexible `/id` partition key** for maximum adaptability and
 - `reorder` (boolean): Whether item needs reordering
 - `createdAt` (string): ISO timestamp when created
 - `modifiedAt` (string): ISO timestamp when last modified
-- `migratedAt` (string, optional): ISO timestamp when migrated from JSON
-- `originalId` (number, optional): Original numeric ID from JSON migration
 
 ### Meal Items (Future)
 
@@ -113,28 +105,6 @@ All containers use **flexible `/id` partition key** for maximum adaptability and
 
 ### Application Fields
 - `createdAt`: Application-controlled creation timestamp
-- `migratedAt`: Migration timestamp (for tracking data origin)
-- `originalId`: Original ID from JSON files (for migration reference)
-
-## Migration Strategy
-
-### Pre-Migration
-1. **Backup existing JSON files** to timestamped directory
-2. **Verify Cosmos DB connection** and container setup
-3. **Test migration** with small dataset first
-
-### Migration Process
-1. **Read JSON files** from `data/` directory
-2. **Transform data** to Cosmos DB document format
-3. **Insert documents** into appropriate containers
-4. **Track success/failure** for each item
-5. **Generate migration report**
-
-### Post-Migration
-1. **Verify data integrity** by comparing counts
-2. **Test application functionality** with Cosmos DB
-3. **Keep JSON backups** until confident in migration
-4. **Update application configuration** to use Cosmos DB
 
 ## Schema Evolution
 
@@ -145,9 +115,9 @@ All containers use **flexible `/id` partition key** for maximum adaptability and
 - ✅ Add new containers
 - ✅ Modify throughput settings
 
-### Complex Changes (Migration Required)
-- ⚠️ Change partition key (create new container, migrate data)
-- ⚠️ Rename containers (create new, migrate, delete old)
+### Complex Changes (Requires Data Movement)
+- ⚠️ Change partition key (create new container, move data)
+- ⚠️ Rename containers (create new, move data, delete old)
 - ⚠️ Major schema restructuring
 
 ### Best Practices
@@ -169,9 +139,10 @@ All containers use **flexible `/id` partition key** for maximum adaptability and
 - **Future optimization** possible with different partition strategies if needed
 
 ### Throughput Planning
-- **Development:** 400 RU/s per container (minimum)
-- **Production:** Scale based on actual usage patterns
-- **Auto-scale** recommended for production workloads
+- **Free Tier:** 1000 RU/s shared across all containers in the database
+- **Database-level throughput:** All containers share the 1000 RU/s allocation
+- **Cost-effective:** Perfect for development and small production workloads
+- **Future scaling:** Can upgrade to provisioned throughput per container when needed
 
 ## API Compatibility
 
@@ -185,30 +156,39 @@ All existing API endpoints continue to work unchanged:
 - `POST /api/meal-items` → `add_meal_item()`
 
 ### Response Format
-Responses maintain the same JSON structure as file-based storage, with Cosmos DB metadata filtered out for clean API responses.
+Responses maintain the same JSON structure as the original API, with Cosmos DB metadata filtered out for clean API responses.
 
 ## Environment Configuration
 
+### Single Cosmos DB Account Setup
+All environments use the same Cosmos DB account with different databases:
+
 ### Local Development (Emulator)
 ```env
-USE_LOCAL_FILES=false
 COSMOS_ENDPOINT=https://localhost:8081
 COSMOS_KEY=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==
 COSMOS_DATABASE=picky-dev
 ```
 
+### Azure Development
+```env
+COSMOS_ENDPOINT=https://your-cosmos-account.documents.azure.com:443/
+COSMOS_KEY=your-primary-key
+COSMOS_DATABASE=picky-dev
+```
+
 ### Azure Staging
 ```env
-USE_LOCAL_FILES=false
-COSMOS_ENDPOINT=https://your-staging-cosmos.documents.azure.com:443/
-COSMOS_KEY=your-staging-primary-key
+COSMOS_ENDPOINT=https://your-cosmos-account.documents.azure.com:443/
+COSMOS_KEY=your-primary-key
 COSMOS_DATABASE=picky-staging
 ```
 
 ### Azure Production
 ```env
-USE_LOCAL_FILES=false
-COSMOS_ENDPOINT=https://your-prod-cosmos.documents.azure.com:443/
-COSMOS_KEY=your-production-primary-key
+COSMOS_ENDPOINT=https://your-cosmos-account.documents.azure.com:443/
+COSMOS_KEY=your-primary-key
 COSMOS_DATABASE=picky-production
 ```
+
+**Note:** All environments share the same Cosmos DB account and 1000 RU/s free tier allocation, but use separate databases for isolation.
