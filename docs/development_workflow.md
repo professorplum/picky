@@ -14,6 +14,20 @@ This document outlines the standard development workflow for this project, from 
 - All code must pass automated checks before being merged into `stage`.
 - The only branches that should be created from `main` are the initial `stage` branch and emergency `hotfix/*` branches.
 
+## Current vs Planned State
+
+### Current State
+- **Local Development**: Manual execution with `python -m backend.run` or `./run-dev.sh`
+- **Testing**: Manual testing via `pytest` command
+- **Code Review**: GitHub Copilot PR review configured on GitHub.com (triggers on PR open)
+- **No CI/CD**: No GitHub Actions workflows in repository
+- **No Deployment**: Local development only
+
+### Planned State
+- **Automated CI**: GitHub Actions will run linting and testing on PRs
+- **Automated Deployment**: Azure App Service deployment for `stage` and `main` branches
+- **Monitoring**: Application Insights and Log Analytics integration
+
 ---
 
 ## The Workflow: Step-by-Step
@@ -74,12 +88,12 @@ This phase is about ensuring code quality before it gets merged.
     -   **Where:** GitHub.
     -   **What:** Create a new Pull Request to merge your feature branch into the **`stage` branch**. The PR title should be clear, and the description should again reference the PBI (`AB#123`).
 
-2.  **Automated Checks (CI):**
-    -   **Where:** GitHub Actions.
-    -   **What:** Opening the PR automatically triggers a GitHub Action workflow. This workflow runs quality checks like:
+2.  **Automated Checks (Current vs Planned):**
+    -   **Current:** GitHub Copilot PR review is configured on GitHub.com and automatically triggers when a PR is opened.
+    -   **Planned:** GitHub Actions will provide additional CI checks:
         -   **Linting:** Checks for code style and potential errors.
         -   **Testing:** Runs automated unit and integration tests.
-    -   **Result:** The status of these checks is displayed directly on the PR page. The PR **cannot be merged into `stage`** until these checks pass.
+    -   **Result:** The status of these checks will be displayed directly on the PR page. The PR **cannot be merged into `stage`** until these checks pass.
 
 3.  **Code Review:**
     -   **Where:** GitHub.
@@ -93,19 +107,49 @@ This phase covers merging features, deploying to a staging environment, and prom
     -   **Where:** GitHub.
     -   **What:** Once the CI checks are passing, merge the PR into the **`stage` branch**. Use a "Squash and Merge" to keep the `stage` branch history clean with one commit per feature.
 
-2.  **Automatic Deployment to Staging:**
-    -   **Where:** Azure App Service (Staging Slot)
-    -   **What:** An Azure App Service deployment slot is configured to monitor the `stage` branch. When it detects the new merge commit, it automatically deploys the code to a staging environment for final review.
+2.  **Deployment (Current vs Planned):**
+    -   **Current:** No automatic deployment. Manual local testing only.
+    -   **Planned:** Automatic Deployment to Staging:
+        -   **Where:** Azure App Service (Staging Slot)
+        -   **What:** An Azure App Service deployment slot will be configured to monitor the `stage` branch. When it detects the new merge commit, it will automatically deploy the code to a staging environment for final review.
 
-3.  **Promote to Production (main):**
+3.  **Promote to Production (Planned):**
     -   **Where:** GitHub
     -   **What:** When you are ready to release, open a new Pull Request to merge the **`stage` branch into the `main` branch**. This PR provides a clear overview of all the features going into the release.
     -   **Process:** After a final check, this PR is merged.
 
-4.  **Automatic Deployment to Production:**
+4.  **Automatic Deployment to Production (Planned):**
     -   **Where:** Azure App Service (Production Slot)
-    -   **What:** The production App Service is configured to monitor the `main` branch. When it detects the merge from `stage`, it automatically pulls the latest code and deploys it.
+    -   **What:** The production App Service will be configured to monitor the `main` branch. When it detects the merge from `stage`, it will automatically pull the latest code and deploy it.
 
 5.  **Close Work Items:**
     -   **Where:** Azure DevOps.
     -   **What:** The PBI and its related Tasks can be automatically moved to the "Done" state by the merge commit to `stage` (if configured) or you can move them manually. This completes the lifecycle.
+
+## Local Development Setup
+
+### Prerequisites
+- Python 3.x
+- Azure CLI (`az login`)
+- Azure Key Vault access
+
+### Environment Configuration
+1. Copy `env.example` to `.env`
+2. Set `KEY_VAULT_URL` in your `.env` file
+3. Ensure you're authenticated with Azure: `az login`
+4. The app will automatically fetch Cosmos DB credentials from Key Vault
+
+### Running the Application
+```bash
+# Activate virtual environment
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+python -m backend.run  # By default, this starts the server on port 5001
+
+# Or use the development script
+./run-dev.sh
+```

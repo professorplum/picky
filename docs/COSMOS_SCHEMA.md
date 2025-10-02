@@ -12,9 +12,11 @@ The application uses a **single container** with **flexible `/id` partition key*
 
 | Container Name | Purpose | Partition Key | Throughput |
 |----------------|---------|---------------|------------|
-| `stage-container` | All application data | `/id` | 1000 RU/s |
+| `dev-container` | Development environment data | `/id` | 1000 RU/s |
+| `stage-container` | Staging environment data | `/id` | 1000 RU/s |
+| `prod-container` | Production environment data | `/id` | 1000 RU/s |
 
-**Note**: The container name is configurable via environment variables and may vary by deployment environment.
+**Note**: Container names are environment-derived based on the Azure Key Vault configuration. Each environment uses its own container for data isolation.
 
 ## Document Schemas
 
@@ -181,35 +183,37 @@ Responses maintain the same JSON structure as the original API, with Cosmos DB m
 
 ## Environment Configuration
 
-### Single Cosmos DB Account Setup
-All environments use the same Cosmos DB account with different databases:
+### Azure Key Vault Configuration
+All environments use Azure Key Vault for secure credential management:
 
-### Local Development (Emulator)
+### Local Development
 ```env
-COSMOS_ENDPOINT=https://localhost:8081
-COSMOS_KEY=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==
-COSMOS_DATABASE=picky-dev
+KEY_VAULT_URL="https://your-keyvault.vault.azure.net/"
+ENV_NAME=Development
 ```
 
-### Azure Development
+The app automatically fetches:
+- `cosmos-connection-string-dev` from Key Vault
+- Uses `dev-container` for data storage
+
+### Azure Staging (Planned)
 ```env
-COSMOS_ENDPOINT=https://your-cosmos-account.documents.azure.com:443/
-COSMOS_KEY=your-primary-key
-COSMOS_DATABASE=picky-dev
+KEY_VAULT_URL="https://your-keyvault.vault.azure.net/"
+ENV_NAME=Staging
 ```
 
-### Azure Staging
+The app will automatically fetch:
+- `cosmos-connection-string-stage` from Key Vault
+- Uses `stage-container` for data storage
+
+### Azure Production (Planned)
 ```env
-COSMOS_ENDPOINT=https://your-cosmos-account.documents.azure.com:443/
-COSMOS_KEY=your-primary-key
-COSMOS_DATABASE=picky-staging
+KEY_VAULT_URL="https://your-keyvault.vault.azure.net/"
+ENV_NAME=Production
 ```
 
-### Azure Production
-```env
-COSMOS_ENDPOINT=https://your-cosmos-account.documents.azure.com:443/
-COSMOS_KEY=your-primary-key
-COSMOS_DATABASE=picky-production
-```
+The app will automatically fetch:
+- `cosmos-connection-string-prod` from Key Vault
+- Uses `prod-container` for data storage
 
-**Note:** All environments share the same Cosmos DB account and 1000 RU/s free tier allocation, but use separate databases for isolation.
+**Note:** All environments share the same Cosmos DB account and 1000 RU/s free tier allocation, but use separate containers for isolation. Credentials are securely managed via Azure Key Vault.

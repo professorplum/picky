@@ -11,6 +11,11 @@ Simple meal planner with Azure Cosmos DB backend for scalable cloud storage.
 └─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
 
+**Current Features:**
+- **Larder Liszt**: Track pantry items and reorder status
+- **Chopin Liszt**: Shopping list with cart status
+- **Meals**: Meal planning with ingredients
+
 ## 🚀 Quick Start
 
 ### 1. Set Up Virtual Environment
@@ -27,14 +32,23 @@ venv\Scripts\activate     # On Windows
 pip install -r requirements.txt
 ```
 
-**Alternative: Use the activation script**
-```bash
-# Make executable and run
-chmod +x activate.sh
-./activate.sh
-```
 
-### 2. Run the App
+### 2. Configure Azure Key Vault
+The app uses Azure Key Vault for secure credential management. You need:
+
+1. **Set up Azure authentication:**
+   ```bash
+   az login
+   ```
+
+2. **Configure Key Vault URL in your `.env` file:**
+   ```bash
+   KEY_VAULT_URL="https://your-keyvault.vault.azure.net/"
+   ```
+
+3. **The app will automatically fetch Cosmos DB connection string from Key Vault**
+
+### 3. Run the App
 ```bash
 # Make sure virtual environment is activated
 source venv/bin/activate
@@ -48,21 +62,20 @@ python -m backend.run --port 8080
 # No browser auto-open
 python -m backend.run --no-browser
 
-# Both options
-python -m backend.run --port 3000 --no-browser
+# Development script (uses port 8001)
+./run-dev.sh
+
+# Alternative: Direct Flask app (uses PORT env var or defaults to 8000)
+python -m backend.app
 ```
-This will:
-- Start the Flask server on the specified port (default: 5001)
-- Automatically open your browser (unless `--no-browser` is used)
-- Configure Cosmos DB connection in `.env` file
 
 **Note:** Always activate your virtual environment before running the app!
 
-### 3. Start Planning Meals!
-- Add meal entries in the weekly grid
-- Add/remove persons as needed
+### 4. Start Using Picky!
+- **Larder Liszt**: Add pantry items, mark for reorder
+- **Chopin Liszt**: Add shopping items, mark as in cart
+- **Meals**: Add meal ideas with ingredients
 - Data auto-saves as you type
-- Navigate between weeks
 
 ## 📁 Project Structure
 
@@ -71,7 +84,9 @@ picky/
 ├── backend/               # Python Flask application
 │   ├── app.py            # Flask server & API routes
 │   ├── config.py         # Environment configurations
-│   ├── cosmos_data_layer.py  # Cosmos DB data layer
+│   ├── database_service.py # Cosmos DB connection service
+│   ├── data_layer.py     # Data access layer
+│   ├── secrets_service.py # Azure Key Vault integration
 │   └── run.py            # Startup script
 ├── frontend/              # Static web files
 │   ├── index.html        # Main HTML page
@@ -80,12 +95,11 @@ picky/
 │   ├── logo.png          # Logo image
 │   └── favicon.ico       # Favicon
 ├── tests/                 # Test files
-│   ├── test_cosmos_connection.py
+│   ├── test_api_endpoints.py
 │   ├── test_crud_operations.py
-│   └── test-cosmos.py
+│   ├── test_data_layer_crud.py
+│   └── test_cosmos_connection.py
 ├── scripts/               # Utility scripts
-│   ├── data_migration.py # JSON to Cosmos migration
-│   ├── schema_migration.py  # Schema management
 │   └── reset_cosmos.py   # Database reset utility
 ├── docs/                  # Documentation
 │   ├── architecture.md   # Architecture overview
@@ -102,52 +116,54 @@ For detailed architecture and workflow documentation, see the [docs/](docs/) dir
 
 ## 🔧 Data Layer Design
 
-The `DataLayer` class provides a clean abstraction that makes it easy to swap backends:
+The `DataLayer` class provides a clean abstraction with Azure Key Vault integration:
 
-### Current: Azure Cosmos DB
+### Current: Azure Cosmos DB with Key Vault
 ```python
-data_layer = CosmosDataLayer(endpoint, key, database)  # Uses Azure Cosmos DB
+# Uses Azure Key Vault for secure credential management
+data_layer = DataLayer()  # Automatically connects via Key Vault
 ```
 
-### Future: MongoDB Atlas
-```python
-data_layer = MongoDBDataLayer(connection_string="mongodb+srv://...")
-```
-
-### Future: Cosmos DB
-```python
-data_layer = CosmosDBDataLayer(connection_string="AccountEndpoint=...")
-```
+The app uses:
+- **DatabaseService**: Manages Cosmos DB connections with health checks
+- **SecretsService**: Retrieves credentials from Azure Key Vault
+- **DataLayer**: Provides clean CRUD interface for all item types
 
 ## 📊 Data Model
 
-### Meal Data Structure
+### Larder Items
 ```json
 {
-  "local-user": {
-    "weekData": {
-      "2024-W01": {
-        "Monday": {
-          "Emma": "Pasta",
-          "Jake": "Chicken nuggets"
-        },
-        "Tuesday": {
-          "Emma": "Mac and cheese",
-          "Jake": "Pizza"
-        }
-      }
-    },
-    "lastUpdated": "2024-01-15T10:30:00Z",
-    "userId": "local-user"
-  }
+  "id": "1759017526823-4567",
+  "name": "bananas",
+  "type": "larder",
+  "reorder": false,
+  "createdAt": "2025-09-28T23:45:18.216071",
+  "modifiedAt": "2025-09-28T23:45:18.216071"
 }
 ```
 
-### Person Data Structure
+### Shopping Items
 ```json
 {
-  "persons": ["Emma", "Jake", "Sophie", "Alex"],
-  "lastUpdated": "2024-01-15T10:30:00Z"
+  "id": "1759017526823-4567",
+  "name": "milk",
+  "type": "shopping",
+  "inCart": false,
+  "createdAt": "2025-09-28T23:45:18.216071",
+  "modifiedAt": "2025-09-28T23:45:18.216071"
+}
+```
+
+### Meal Items
+```json
+{
+  "id": "1759016375267-8901",
+  "name": "Chicken Stir Fry",
+  "type": "meal",
+  "ingredients": "chicken, vegetables, soy sauce",
+  "createdAt": "2025-09-28T23:45:18.216071",
+  "modifiedAt": "2025-09-28T23:45:18.216071"
 }
 ```
 
@@ -156,80 +172,79 @@ data_layer = CosmosDBDataLayer(connection_string="AccountEndpoint=...")
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/health` | Health check |
-| GET | `/api/meals/{user_id}` | Get user's meal data |
-| POST | `/api/meals/{user_id}` | Save user's meal data |
-| PUT | `/api/meals/{user_id}` | Update user's meal data |
-| GET | `/api/persons` | Get list of persons |
-| POST | `/api/persons` | Add new person |
+| GET | `/api/larder-items` | Get all larder items |
+| POST | `/api/larder-items` | Add new larder item |
+| PUT | `/api/larder-items/{id}` | Update larder item |
+| DELETE | `/api/larder-items/{id}` | Delete larder item |
+| GET | `/api/shopping-items` | Get all shopping items |
+| POST | `/api/shopping-items` | Add new shopping item |
+| PUT | `/api/shopping-items/{id}` | Update shopping item |
+| DELETE | `/api/shopping-items/{id}` | Delete shopping item |
+| GET | `/api/meal-items` | Get all meal items |
+| POST | `/api/meal-items` | Add new meal item |
+| PUT | `/api/meal-items/{id}` | Update meal item |
+| DELETE | `/api/meal-items/{id}` | Delete meal item |
 
-## 🔄 Migration Path
+## 🔄 Current State
 
-### Phase 1: Cloud Development (Current)
-- ✅ Azure Cosmos DB backend
+### Phase 1: Local Development (Current)
+- ✅ Azure Cosmos DB backend with Key Vault
 - ✅ Local Flask server
 - ✅ Simple HTML/CSS/JS frontend
+- ✅ Three item types: larder, shopping, meals
 
-### Phase 2: Cloud Database
-- 🔄 MongoDB Atlas integration
-- 🔄 Keep same API interface
-- 🔄 Same frontend code
-
-### Phase 3: Azure Deployment
-- 🔄 Cosmos DB integration
-- 🔄 Azure Functions deployment
-- 🔄 Static Web Apps hosting
+### Phase 2: Azure Deployment (Planned)
+- 🔄 Azure App Service deployment
+- 🔄 Azure Application Insights monitoring
+- 🔄 GitHub Actions CI/CD pipeline
 
 ## 🛠️ Development
 
-### Manual Server Start
+### Server Options
 ```bash
+# Recommended: Use the startup script (port 5001)
+python -m backend.run
+
+# Development script (port 8001)
+./run-dev.sh
+
+# Direct Flask app (uses PORT env var or defaults to 8000)
 python -m backend.app
 ```
 
-### Using the Development Script
-```bash
-./run-dev.sh
-```
-
-### Frontend Only (if server running elsewhere)
-```bash
-# Serve HTML files with any HTTP server
-python -m http.server 8000
-# Then visit http://localhost:8000
-```
-
 ### Environment Configuration
-The app requires Cosmos DB configuration in your `.env` file. Copy `env.example` to `.env` and configure your Cosmos DB credentials.
+The app uses Azure Key Vault for secure credential management. Copy `env.example` to `.env`, set your Key Vault URL, and ensure you set `ENV_NAME=Development` (or another appropriate value). The app will automatically fetch Cosmos DB credentials from Key Vault.
+
+> **Tip:** Make sure your `.env` file uses `ENV_NAME` (not `ENV`) and set it to `Development` for local development.
 
 ## 🔒 Security Notes
 
 - Currently designed for local development
 - No authentication (single local user)
-- Future versions will add proper auth
+- Credentials managed via Azure Key Vault
 - Data is stored in Azure Cosmos DB
+- Future versions will add proper auth
 
 ## 🎯 Features
 
-- ✅ Weekly meal planning grid
-- ✅ Multiple person support
-- ✅ Week navigation
+- ✅ Larder Liszt: Track pantry items and reorder status
+- ✅ Chopin Liszt: Shopping list with cart status
+- ✅ Meals: Meal planning with ingredients
 - ✅ Auto-save functionality
-- ✅ Add/remove persons
 - ✅ Responsive design
 - ✅ Clean, extensible architecture
 
 ## 🚀 Next Steps
 
-1. **Test locally** - Run the app and plan some meals
-2. **Customize** - Modify persons, styling, or features
+1. **Test locally** - Run the app and try all three item types
+2. **Customize** - Modify styling or add features
 3. **Extend** - Add new features or data fields
-4. **Migrate** - When ready, swap to MongoDB Atlas
-5. **Deploy** - Move to Azure with Cosmos DB
+4. **Deploy** - Move to Azure App Service with Application Insights
 
 ## 💡 Benefits of This Approach
 
 - **Fast Development** - Get working app in minutes
-- **No Dependencies** - Just Python and a browser
+- **Secure** - Azure Key Vault for credential management
 - **Cloud Storage** - Scalable Azure Cosmos DB backend
-- **Extensible** - Clean migration path to cloud
-- **Simple** - No complex setup or configuration
+- **Extensible** - Clean architecture for future features
+- **Simple** - Minimal setup with Azure authentication
