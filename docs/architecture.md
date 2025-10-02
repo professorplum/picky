@@ -6,7 +6,7 @@ This document outlines the architecture for the Picky application. It covers the
 
 The architecture is composed of several key components working together:
 
--   **Application**: A Python Flask web application that serves a simple frontend (HTML, CSS, JS) and provides a backend API for data management. The app manages three item types: larder items, shopping items, and meal items.
+-   **Application**: A Python Flask web application that serves a simple frontend (HTML, CSS, JS) and provides a backend API for data management. The app manages three item types: larder items, shopping items, and meals.
 -   **Source Control & CI/CD**:
     -   **GitHub**: Hosts the source code. It's the single source of truth for the codebase and is used for version control, branching (`feature` -> `stage` -> `main`), and Pull Requests.
     -   **GitHub Copilot PR Review**: Currently configured on GitHub.com to automatically review Pull Requests when opened.
