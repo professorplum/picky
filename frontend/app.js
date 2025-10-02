@@ -153,7 +153,9 @@ async function addPerson() {
 async function loadShoppingItems() {
   try {
     const response = await fetch(`${API_BASE}/shopping-items`);
-    shoppingItems = response.ok ? await response.json() : [];
+    const items = response.ok ? await response.json() : [];
+    // Mark all loaded items as saved
+    shoppingItems = items.map(item => ({ ...item, saved: true }));
     renderShoppingTable();
     showStatus('Ready!', 'success');
   } catch (error) {
@@ -258,7 +260,8 @@ async function addShoppingItem() {
   const newItem = {
     id: Date.now(),
     name: '',
-    checked: false
+    checked: false,
+    saved: false
   };
   shoppingItems.push(newItem);
   renderShoppingTable();
@@ -286,7 +289,9 @@ async function saveShoppingData(event) {
     const item = shoppingItems[index];
     if (item.name && item.name.trim()) {
       try {
-        await saveShoppingItem(item);
+        const savedItem = await saveShoppingItem(item);
+        // Update the item with server data and mark as saved
+        shoppingItems[index] = { ...savedItem, saved: true };
       } catch (error) {
         // Error already handled in saveShoppingItem
       }
@@ -331,7 +336,9 @@ async function clearCompletedItems() {
 async function loadLarderItems() {
   try {
     const response = await fetch(`${API_BASE}/larder-items`);
-    larderItems = response.ok ? await response.json() : [];
+    const items = response.ok ? await response.json() : [];
+    // Mark all loaded items as saved
+    larderItems = items.map(item => ({ ...item, saved: true }));
     renderLarderTable();
   } catch (error) {
     console.error('Failed to load larder items:', error);
@@ -429,7 +436,8 @@ async function addLarderItem() {
   const newItem = {
     id: Date.now(),
     name: '',
-    reorder: false
+    reorder: false,
+    saved: false
   };
   larderItems.push(newItem);
   renderLarderTable();
@@ -457,7 +465,9 @@ async function saveLarderData(event) {
     const item = larderItems[index];
     if (item.name && item.name.trim()) {
       try {
-        await saveLarderItem(item);
+        const savedItem = await saveLarderItem(item);
+        // Update the item with server data and mark as saved
+        larderItems[index] = { ...savedItem, saved: true };
       } catch (error) {
         // Error already handled in saveLarderItem
       }
@@ -483,7 +493,9 @@ async function clearReorderItems() {
 async function loadMealItems() {
   try {
     const response = await fetch(`${API_BASE}/meal-items`);
-    mealItems = response.ok ? await response.json() : [];
+    const items = response.ok ? await response.json() : [];
+    // Mark all loaded items as saved
+    mealItems = items.map(item => ({ ...item, saved: true }));
     renderMealTable();
   } catch (error) {
     console.error('Failed to load meal items:', error);
@@ -580,7 +592,8 @@ async function addMealItem() {
   const newItem = {
     id: Date.now(),
     name: '',
-    ingredients: ''
+    ingredients: '',
+    saved: false
   };
   mealItems.push(newItem);
   renderMealTable();
@@ -603,7 +616,9 @@ async function saveMealData(event) {
     const item = mealItems[index];
     if (item.name && item.name.trim()) {
       try {
-        await saveMealItem(item);
+        const savedItem = await saveMealItem(item);
+        // Update the item with server data and mark as saved
+        mealItems[index] = { ...savedItem, saved: true };
       } catch (error) {
         // Error already handled in saveMealItem
       }
@@ -619,7 +634,7 @@ async function deleteMealItem(index) {
     showStatus('Meal deleted', 'success');
     
     // If the item was saved to the server, delete it there too
-    if (item.id && typeof item.id === 'string' && item.id.includes('-')) {
+    if (item.saved && item.id) {
       try {
         const response = await fetch(`${API_BASE}/meal-items/${item.id}`, {
           method: 'DELETE'
