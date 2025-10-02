@@ -427,7 +427,7 @@ function renderLarderTable() {
 
 async function addLarderItem() {
   const newItem = {
-    id: Date.now(),
+    id: crypto.randomUUID(),
     name: '',
     reorder: false
   };
