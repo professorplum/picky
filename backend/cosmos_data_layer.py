@@ -4,9 +4,12 @@ Implements the same interface as DataLayer but uses Azure Cosmos DB for storage
 """
 import ssl
 import urllib3
+import logging
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from azure.cosmos import CosmosClient, PartitionKey, exceptions
+
+logger = logging.getLogger(__name__)
 
 
 class CosmosDataLayer:
@@ -76,7 +79,7 @@ class CosmosDataLayer:
                     offer_throughput=400  # Minimum throughput for development
                 )
                 self.containers[container_name] = container
-                print(f"Container '{container_name}' ready")
+                logger.info(f"Container '{container_name}' ready")
             except exceptions.CosmosHttpResponseError as e:
                 raise RuntimeError(f"Failed to create container '{container_name}': {e}")
     

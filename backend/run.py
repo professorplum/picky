@@ -7,7 +7,10 @@ import sys
 import webbrowser
 import time
 import argparse
+import logging
 from threading import Timer
+
+logger = logging.getLogger(__name__)
 
 def main():
     parser = argparse.ArgumentParser(description='Start Picky Meal Planner')
@@ -25,14 +28,17 @@ def main():
         else:
             port = 5001
 
-    print("Picky - Meal Planner")
-    print("=" * 50)
-    print("Data will be stored in Azure Cosmos DB")
-    print(f"Effective port: {port}")
-    if not args.no_browser:
-        print(f"Opening browser at http://localhost:{port}")
-    print("Press Ctrl+C to stop the server")
-    print("=" * 50)
+    # Only show startup messages in development
+    env_name = os.environ.get('ENV_NAME', 'Development')
+    if env_name == 'Development':
+        logger.info("Picky - Meal Planner")
+        logger.info("=" * 50)
+        logger.info("Data will be stored in Azure Cosmos DB")
+        logger.info(f"Effective port: {port}")
+        if not args.no_browser:
+            logger.info(f"Opening browser at http://localhost:{port}")
+        logger.info("Press Ctrl+C to stop the server")
+        logger.info("=" * 50)
 
     # Open browser after delay (unless disabled)
     if not args.no_browser:
@@ -47,9 +53,9 @@ def main():
             from app import run_server
         run_server(port=port, debug=False)
     except Exception as e:
-        print(f"Error starting server: {e}")
+        logger.error(f"Error starting server: {e}")
         if not args.no_browser:
-            print("Browser opening cancelled due to server error.")
+            logger.warning("Browser opening cancelled due to server error.")
 
 if __name__ == '__main__':
     main()

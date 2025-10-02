@@ -3,6 +3,9 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from pathlib import Path
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Import from backend package (works with editable install)
 from backend.config import get_config
@@ -34,18 +37,20 @@ try:
     # Initialize the new database service
     db_connected = initialize_database()
     if db_connected:
-        print("Successfully initialized Cosmos DB connection with new architecture")
+        if app.config.get('ENV_NAME') == 'Development':
+            logger.info("Successfully initialized Cosmos DB connection with new architecture")
         
         # Initialize the new data layer
         data_layer = DataLayer()
-        print("Successfully initialized new data layer")
+        if app.config.get('ENV_NAME') == 'Development':
+            logger.info("Successfully initialized new data layer")
     else:
-        print("Failed to initialize Cosmos DB connection")
+        logger.error("Failed to initialize Cosmos DB connection")
         data_layer = None
     
 except Exception as e:
-    print(f"Failed to initialize database service: {e}")
-    print("App will fail gracefully when attempting to use database")
+    logger.error(f"Failed to initialize database service: {e}")
+    logger.warning("App will fail gracefully when attempting to use database")
     data_layer = None
 
 @app.route('/')
@@ -84,24 +89,6 @@ def favicon():
     """Serve favicon from frontend directory"""
     return send_from_directory(str(frontend_dir), 'favicon.ico')
 
-@app.route('/api/health', methods=['GET'])
-def health():
-    config_info = {
-        "status": "OK" if data_layer else "ERROR",
-        "message": "Picky API is running" if data_layer else "Database connection failed",
-        "env": app.config.get("ENV_NAME"),
-        "debug": app.config.get("DEBUG"),
-        "storage_type": "cosmos_db"
-    }
-    
-    if data_layer:
-        config_info["database"] = app.config.get("COSMOS_DATABASE")
-        config_info["database_status"] = "connected"
-    else:
-        config_info["database_status"] = "disconnected"
-        config_info["error"] = "Cosmos DB connection not available"
-    
-    return jsonify(config_info)
 
 def check_data_layer():
     """Helper function to check if data layer is available"""
@@ -316,19 +303,20 @@ def run_server(port=None, debug=None):
     if debug is None:
         debug = app.config.get('DEBUG', True)
     
-    # Display startup information
-    print("🍽️  Starting Picky...")
-    print(f"🌍 Environment: {app.config.get('ENV_NAME', 'Unknown')}")
-    
-    # Display data storage information
-    if data_layer:
-        print(f"Data storage: Cosmos DB ({app.config.get('COSMOS_DATABASE', 'picky')})")
-    else:
-        print("Data storage: ERROR - Cosmos DB connection failed")
-    
-    print(f"Debug mode: {debug}")
-    print(f"Server running at http://localhost:{port}")
-    print(f"API available at http://localhost:{port}/api/health")
+    # Display startup information (only in development)
+    if app.config.get('ENV_NAME') == 'Development':
+        logger.info("🍽️  Starting Picky...")
+        logger.info(f"🌍 Environment: {app.config.get('ENV_NAME', 'Unknown')}")
+        
+        # Display data storage information
+        if data_layer:
+            logger.info(f"Data storage: Cosmos DB ({app.config.get('COSMOS_DATABASE', 'picky')})")
+        else:
+            logger.warning("Data storage: ERROR - Cosmos DB connection failed")
+        
+        logger.info(f"Debug mode: {debug}")
+        logger.info(f"Server running at http://localhost:{port}")
+        logger.info(f"API available at http://localhost:{port}/api/health")
     
     host = app.config.get('HOST', '0.0.0.0')
     app.run(debug=debug, host=host, port=port)

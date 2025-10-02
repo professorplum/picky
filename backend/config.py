@@ -3,8 +3,11 @@ Configuration classes for different environments
 Simplified for Cosmos DB only
 """
 import os
+import logging
 from typing import Optional
 from .secrets_service import get_secrets_service
+
+logger = logging.getLogger(__name__)
 
 
 class Config:
@@ -110,7 +113,11 @@ config_map = {
 def get_config():
     """Get the appropriate configuration class based on ENV_NAME"""
     env_name = os.environ.get('ENV_NAME', 'Development')
-    print(f"🔧 get_config() called with ENV_NAME: {env_name}")
     config_class = config_map.get(env_name, DevelopmentConfig)
-    print(f"🔧 Using config class: {config_class.__name__}")
+    
+    # Only log config details in development
+    if env_name == 'Development':
+        logger.info(f"🔧 get_config() called with ENV_NAME: {env_name}")
+        logger.info(f"🔧 Using config class: {config_class.__name__}")
+    
     return config_class
