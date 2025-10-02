@@ -37,21 +37,23 @@ try:
     # Initialize the new database service
     db_connected = initialize_database()
     if db_connected:
-        if app.config.get('ENV_NAME') == 'Development':
+        if app.config.get('ENV') == 'dev':
             logger.info("Successfully initialized Cosmos DB connection with new architecture")
         
         # Initialize the new data layer
         data_layer = DataLayer()
-        if app.config.get('ENV_NAME') == 'Development':
+        if app.config.get('ENV') == 'dev':
             logger.info("Successfully initialized new data layer")
     else:
         logger.error("Failed to initialize Cosmos DB connection")
         data_layer = None
     
 except Exception as e:
-    logger.error(f"Failed to initialize database service: {e}")
-    logger.warning("App will fail gracefully when attempting to use database")
-    data_layer = None
+    logger.error(f"SHOWSTOPPER: Failed to initialize database service: {e}")
+    logger.error("SHOWSTOPPER: Cannot start application without database connection")
+    logger.error("SHOWSTOPPER: Exiting to prevent serving broken application")
+    import sys
+    sys.exit(1)
 
 @app.route('/')
 def index():
@@ -334,9 +336,9 @@ def run_server(port=None, debug=None):
         debug = app.config.get('DEBUG', True)
     
     # Display startup information (only in development)
-    if app.config.get('ENV_NAME') == 'Development':
+    if app.config.get('ENV') == 'dev':
         logger.info("🍽️  Starting Picky...")
-        logger.info(f"🌍 Environment: {app.config.get('ENV_NAME', 'Unknown')}")
+        logger.info(f"🌍 Environment: {app.config.get('ENV', 'Unknown')}")
         
         # Display data storage information
         if data_layer:

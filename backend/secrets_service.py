@@ -77,7 +77,7 @@ class SecretsService:
         
         Args:
             app_name: Application name
-            environment: Environment name
+            environment: Environment name (dev|stage|prod)
             
         Returns:
             Database name
@@ -105,7 +105,7 @@ class SecretsService:
         Get container name for the specified environment
         
         Args:
-            environment: Environment name (dev, stage, prod)
+            environment: Environment name (dev|stage|prod)
             
         Returns:
             Container name

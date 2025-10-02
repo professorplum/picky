@@ -29,8 +29,8 @@ def main():
             port = 5001
 
     # Only show startup messages in development
-    env_name = os.environ.get('ENV_NAME', 'Development')
-    if env_name == 'Development':
+    env = os.environ.get('ENV', 'dev')
+    if env == 'dev':
         logger.info("Picky - Meal Planner")
         logger.info("=" * 50)
         logger.info("Data will be stored in Azure Cosmos DB")
