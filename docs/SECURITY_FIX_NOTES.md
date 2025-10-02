@@ -1,39 +1,37 @@
 # Security Fix Notes
 
-## GitHub Copilot Review: Hardcoded Cosmos DB Emulator Key
+## RESOLVED: Hardcoded Cosmos DB Emulator Key
 
-### Issue
-Hardcoded Cosmos DB emulator key in configuration poses potential security risk.
+### Issue (Resolved)
+Hardcoded Cosmos DB emulator key in configuration posed potential security risk.
 
-### Current Location
-The hardcoded key will be in the config.py file from the `feature/env-vars` branch:
+### Resolution
+The application now uses Azure Key Vault for secure credential management:
+
+**Current Implementation:**
 ```python
-COSMOS_KEY = os.environ.get('COSMOS_KEY', 'C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==')
+# Credentials are retrieved from Azure Key Vault
+secrets_service = get_secrets_service()
+connection_string = secrets_service.get_cosmos_connection_string(environment)
 ```
 
-### Fix Required
-Move the default emulator key to environment variable pattern:
+### Security Improvements
+1. ✅ **No hardcoded credentials** - All secrets stored in Azure Key Vault
+2. ✅ **Environment-specific secrets** - Each environment has its own connection string
+3. ✅ **Azure authentication** - Uses `DefaultAzureCredential` for secure access
+4. ✅ **Automatic rotation** - Key Vault supports secret rotation without code changes
 
-**Before:**
-```python
-# Hardcoded in config class
-COSMOS_KEY = 'C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw=='
-```
+### Current Architecture
+- **Local Development**: Uses `az login` authentication to access Key Vault
+- **Azure Deployment**: Will use Managed Identity for Key Vault access
+- **Secret Management**: All Cosmos DB connection strings stored securely in Key Vault
+- **Environment Isolation**: Each environment uses separate secrets and containers
 
-**After:**
-```python
-# Environment variable first, emulator key as fallback
-COSMOS_KEY = os.environ.get('COSMOS_KEY', 'C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==')
-```
-
-### Why This is Better
-1. ✅ **Environment variable first** - follows security best practices
-2. ✅ **Fallback to emulator key** - maintains developer convenience  
-3. ✅ **Satisfies security scanners** - no hardcoded credentials
-4. ✅ **Consistent pattern** - matches other environment variables
-
-### When to Apply
-After merging `feature/env-vars` to `stage` and rebasing `feature/cosmos-db`, update the config.py file with the environment variable pattern.
+### Benefits
+- **Enhanced Security**: No credentials in code or environment variables
+- **Centralized Management**: All secrets managed in one secure location
+- **Audit Trail**: Key Vault provides access logging and monitoring
+- **Compliance**: Meets enterprise security requirements
 
 ### Note
-The emulator key is technically safe (public, localhost-only, Microsoft-documented), but following the environment variable pattern is a security best practice.
+This implementation follows Azure security best practices and eliminates the need for hardcoded credentials while maintaining developer convenience through Azure CLI authentication.
