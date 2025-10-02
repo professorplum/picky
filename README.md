@@ -213,9 +213,9 @@ python -m backend.app
 ```
 
 ### Environment Configuration
-The app uses Azure Key Vault for secure credential management. Copy `env.example` to `.env` and set your Key Vault URL. The app will automatically fetch Cosmos DB credentials from Key Vault.
+The app uses Azure Key Vault for secure credential management. Copy `env.example` to `.env`, set your Key Vault URL, and ensure you set `ENV_NAME=Development` (or another appropriate value). The app will automatically fetch Cosmos DB credentials from Key Vault.
 
-**Note:** The current `env.example` uses `ENV=dev` but the code expects `ENV_NAME` with values like `Development`. This will be aligned in a future update.
+> **Tip:** Make sure your `.env` file uses `ENV_NAME` (not `ENV`) and set it to `Development` for local development.
 
 ## 🔒 Security Notes
 
