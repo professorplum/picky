@@ -1,7 +1,3 @@
-if [ -f .env ]; then
-    # Load environment variables from .env if present
-    source .env
-fi
 #!/bin/bash
 # Development server script for Picky Meal Planner
 

@@ -71,7 +71,7 @@ class DevelopmentConfig(Config):
     DEBUG = True
     
     # Specific ports for local development security
-    CORS_ORIGINS = ['http://localhost:5001', 'http://127.0.0.1:5001']
+    CORS_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
 
 
 class StagingConfig(Config):

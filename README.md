@@ -53,7 +53,7 @@ The app uses Azure Key Vault for secure credential management. You need:
 # Make sure virtual environment is activated
 source venv/bin/activate
 
-# Default (port 5001)
+# Default (port 8000)
 python -m backend.run
 
 # Custom port
@@ -202,7 +202,7 @@ The app uses:
 
 ### Server Options
 ```bash
-# Recommended: Use the startup script (port 5001)
+# Recommended: Use the startup script (port 8000)
 python -m backend.run
 
 # Development script (port 8001)

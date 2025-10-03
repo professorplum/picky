@@ -26,7 +26,7 @@ def main():
     elif args.port:
         port = args.port
     else:
-        port = 5001
+        port = 8000
 
     # Only show startup messages in development
     env = os.environ.get('ENV', 'dev')
