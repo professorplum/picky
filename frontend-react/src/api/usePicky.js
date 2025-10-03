@@ -10,7 +10,7 @@ export function usePicky() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async functionfetchAllData() {
+    async function fetchAllData() {
       try {
         const [shopping, larder, meals] = await Promise.all([
           fetch(`${API_BASE}/shopping-items`).then((res) => res.json()),
