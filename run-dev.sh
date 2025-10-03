@@ -17,5 +17,5 @@ echo "🌐 Server will be available at http://localhost:${PORT:-8000}"
 echo "🔧 Development mode: DEBUG=${DEBUG:-true} (auto-reload enabled)"
 echo ""
 
-# Start the development server
-python -m backend.app
+# Start the development server via run.py (proper entry point)
+python -m backend.run --no-browser
