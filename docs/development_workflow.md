@@ -6,13 +6,13 @@ This document outlines the standard development workflow for this project, from 
 
 - **Azure DevOps (ADO)** is the single source of truth for **what** we are building (planning).
 - **GitHub** is the single source of truth for **how** we are building it (code).
-- **Branching Strategy:** We follow a `feature -> stage -> main` branching model.
-  - `main` is our production branch. It should always be stable and deployable.
+- **Branching Strategy:** We follow a `feature -> stage -> prod` branching model.
+  - `prod` is our production branch. It should always be stable and deployable.
   - `stage` is our integration and pre-production branch. All feature branches are merged here for testing.
   - `feature/*` branches are for new development and are created from `stage`.
-- All work is done on `feature` branches, never directly on `stage` or `main`.
+- All work is done on `feature` branches, never directly on `stage` or `prod`.
 - All code must pass automated checks before being merged into `stage`.
-- The only branches that should be created from `main` are the initial `stage` branch and emergency `hotfix/*` branches.
+- The only branches that should be created from `prod` are the initial `stage` branch and emergency `hotfix/*` branches.
 
 ## Current vs Planned State
 
@@ -25,7 +25,7 @@ This document outlines the standard development workflow for this project, from 
 
 ### Planned State
 - **Automated CI**: GitHub Actions will run linting and testing on PRs
-- **Automated Deployment**: Azure App Service deployment for `stage` and `main` branches
+- **Automated Deployment**: Azure App Service deployment for `stage` and `prod` branches
 - **Monitoring**: Application Insights and Log Analytics integration
 
 ---
@@ -115,12 +115,12 @@ This phase covers merging features, deploying to a staging environment, and prom
 
 3.  **Promote to Production (Planned):**
     -   **Where:** GitHub
-    -   **What:** When you are ready to release, open a new Pull Request to merge the **`stage` branch into the `main` branch**. This PR provides a clear overview of all the features going into the release.
+    -   **What:** When you are ready to release, open a new Pull Request to merge the **`stage` branch into the `prod` branch**. This PR provides a clear overview of all the features going into the release.
     -   **Process:** After a final check, this PR is merged.
 
 4.  **Automatic Deployment to Production (Planned):**
     -   **Where:** Azure App Service (Production Slot)
-    -   **What:** The production App Service will be configured to monitor the `main` branch. When it detects the merge from `stage`, it will automatically pull the latest code and deploy it.
+    -   **What:** The production App Service will be configured to monitor the `prod` branch. When it detects the merge from `stage`, it will automatically pull the latest code and deploy it.
 
 5.  **Close Work Items:**
     -   **Where:** Azure DevOps.
@@ -148,7 +148,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Run the application
-python -m backend.run  # By default, this starts the server on port 5001
+python -m backend.run  # By default, this starts the server on port 8000
 
 # Or use the development script
 ./run-dev.sh

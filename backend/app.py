@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 import os
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -350,11 +351,14 @@ def run_server(port=None, debug=None):
         logger.info(f"Server running at http://localhost:{port}")
         logger.info(f"API available at http://localhost:{port}/api/health")
     
-    host = app.config.get('HOST', '0.0.0.0')
-    app.run(debug=debug, host=host, port=port)
+    app.run(debug=debug, host='0.0.0.0', port=port)
 
 
 if __name__ == "__main__":
-    # Always use PORT env var if set, default to 8000 for Azure compatibility
-    port = int(os.environ.get("PORT", 8000))
+    # Direct execution (e.g., for Azure App Service or manual testing)
+    # Uses PORT env var with fallback to 8000
+    # For local development with args/browser, use: python -m backend.run
+    port_env = os.environ.get('PORT')
+    port = int(port_env) if port_env else 8000
+    
     run_server(port=port, debug=False)

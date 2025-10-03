@@ -53,7 +53,7 @@ The app uses Azure Key Vault for secure credential management. You need:
 # Make sure virtual environment is activated
 source venv/bin/activate
 
-# Default (port 5001)
+# Default (port 8000)
 python -m backend.run
 
 # Custom port
@@ -62,7 +62,7 @@ python -m backend.run --port 8080
 # No browser auto-open
 python -m backend.run --no-browser
 
-# Development script (uses port 8001)
+# Development script (respects PORT env var, no browser)
 ./run-dev.sh
 
 # Alternative: Direct Flask app (uses PORT env var or defaults to 8000)
@@ -202,13 +202,13 @@ The app uses:
 
 ### Server Options
 ```bash
-# Recommended: Use the startup script (port 5001)
+# Recommended: Use the startup script (port 8000)
 python -m backend.run
 
-# Development script (port 8001)
+# Development script (auto-opens browser)
 ./run-dev.sh
 
-# Direct Flask app (uses PORT env var or defaults to 8000)
+# Direct Flask app (for production/Azure, uses PORT env var)
 python -m backend.app
 ```
 

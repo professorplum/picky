@@ -8,10 +8,10 @@ The architecture is composed of several key components working together:
 
 -   **Application**: A Python Flask web application that serves a simple frontend (HTML, CSS, JS) and provides a backend API for data management. The app manages three item types: larder items, shopping items, and meals.
 -   **Source Control & CI/CD**:
-    -   **GitHub**: Hosts the source code. It's the single source of truth for the codebase and is used for version control, branching (`feature` -> `stage` -> `main`), and Pull Requests.
+    -   **GitHub**: Hosts the source code. It's the single source of truth for the codebase and is used for version control, branching (`feature` -> `stage` -> `prod`), and Pull Requests.
     -   **GitHub Copilot PR Review**: Currently configured on GitHub.com to automatically review Pull Requests when opened.
     -   **GitHub Actions**: *Planned* - Will provide Continuous Integration (CI) by automatically running quality checks (like linting and testing) on every Pull Request before it can be merged into the `stage` branch.
-    -   **Azure App Service (Deployment Center)**: *Planned* - Will provide Continuous Deployment (CD) by monitoring the `stage` and `main` branches in GitHub. Changes merged to these branches will be automatically deployed to the corresponding environment.
+    -   **Azure App Service (Deployment Center)**: *Planned* - Will provide Continuous Deployment (CD) by monitoring the `stage` and `prod` branches in GitHub. Changes merged to these branches will be automatically deployed to the corresponding environment.
 -   **Data Storage**:
     -   **Azure Cosmos DB**: The application uses Azure Cosmos DB for persistent, scalable data storage across all environments. This provides reliable data persistence and supports automatic scaling based on demand.
     -   **Azure Key Vault**: Secure credential management for Cosmos DB connection strings and other secrets.
@@ -40,7 +40,7 @@ The project is designed to support multiple environments with proper isolation a
 ### Production Environment (Planned)
 
 -   **Purpose**: The live application that is used by end-users.
--   **Deployment Trigger**: *Planned* - Automatic deployment will be triggered upon every merge to the **`main`** branch (which happens when a PR from `stage` is approved).
+-   **Deployment Trigger**: *Planned* - Automatic deployment will be triggered upon every merge to the **`prod`** branch (which happens when a PR from `stage` is approved).
 -   **Azure Resources** (Planned):
     -   App Service Plan (Production)
     -   App Service (Production)
@@ -70,7 +70,7 @@ graph TD
     end
 
     subgraph "Planned Production"
-        H{Planned: PR stage -> main} -- "Planned: Manual Approval" --> I{Planned: Merge to main};
+        H{Planned: PR stage -> prod} -- "Planned: Manual Approval" --> I{Planned: Merge to prod};
         I -- "Planned: Automatic Deploy" --> J[Planned: Prod App Service];
         J -- "Planned: Logs & Metrics" --> K[Planned: Prod App Insights];
     end

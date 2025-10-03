@@ -7,7 +7,32 @@ import logging
 from typing import Optional
 from .secrets_service import get_secrets_service
 
+
 logger = logging.getLogger(__name__)
+
+
+def resolve_port(arg_port: Optional[int] = None, default: int = 8000) -> int:
+    """
+    Resolve port with consistent precedence order across all entry points.
+    
+    Precedence: --port argument > PORT env var > default
+    
+    Args:
+        arg_port: Port from command-line argument (if provided)
+        default: Default port to use if no other source provides one
+        
+    Returns:
+        The resolved port number
+    """
+    # Best practice: --port argument > PORT env var > default
+    if arg_port is not None:
+        return arg_port
+    
+    port_env = os.environ.get('PORT')
+    if port_env:
+        return int(port_env)
+    
+    return default
 
 
 class Config:
@@ -71,7 +96,7 @@ class DevelopmentConfig(Config):
     DEBUG = True
     
     # Specific ports for local development security
-    CORS_ORIGINS = ['http://localhost:5001', 'http://127.0.0.1:5001']
+    CORS_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
 
 
 class StagingConfig(Config):

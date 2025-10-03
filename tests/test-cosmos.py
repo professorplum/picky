@@ -45,7 +45,7 @@ def main():
     print("\n🚀 After updating .env, restart your app:")
     print("python run.py")
     print("\n📊 Check the configuration at:")
-    print("http://localhost:5001/api/health")
+    print("http://localhost:8000/api/health")
 
 if __name__ == "__main__":
     main()
