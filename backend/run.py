@@ -12,6 +12,12 @@ from threading import Timer
 
 logger = logging.getLogger(__name__)
 
+# Import config utilities
+try:
+    from backend.config import resolve_port
+except ImportError:
+    from config import resolve_port
+
 def main():
     parser = argparse.ArgumentParser(description='Start Picky Meal Planner')
     parser.add_argument('--port', type=int, help='Port to run the server on')
@@ -19,18 +25,12 @@ def main():
 
     args = parser.parse_args()
 
-    # Best practice: --port argument > PORT env var > default
-    port = args.port
-    if port is None:
-        port_env = os.environ.get('PORT')
-        if port_env:
-            port = int(port_env)
-        else:
-            port = 5001
+    # Resolve port with consistent precedence order
+    port = resolve_port(args.port)
 
     # Only show startup messages in development
-    env_name = os.environ.get('ENV_NAME', 'Development')
-    if env_name == 'Development':
+    env = os.environ.get('ENV', 'dev')
+    if env == 'dev':
         logger.info("Picky - Meal Planner")
         logger.info("=" * 50)
         logger.info("Data will be stored in Azure Cosmos DB")

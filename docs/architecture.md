@@ -6,33 +6,42 @@ This document outlines the architecture for the Picky application. It covers the
 
 The architecture is composed of several key components working together:
 
--   **Application**: A Python Flask web application that serves a simple frontend (HTML, CSS, JS) and provides a backend API for data management.
+-   **Application**: A Python Flask web application that serves a simple frontend (HTML, CSS, JS) and provides a backend API for data management. The app manages three item types: larder items, shopping items, and meals.
 -   **Source Control & CI/CD**:
-    -   **GitHub**: Hosts the source code. It's the single source of truth for the codebase and is used for version control, branching (`feature` -> `stage` -> `main`), and Pull Requests.
-    -   **GitHub Actions**: Provides Continuous Integration (CI) by automatically running quality checks (like linting and testing) on every Pull Request before it can be merged into the `stage` branch.
-    -   **Azure App Service (Deployment Center)**: Provides Continuous Deployment (CD) by monitoring the `stage` and `main` branches in GitHub. Changes merged to these branches are automatically deployed to the corresponding environment.
+    -   **GitHub**: Hosts the source code. It's the single source of truth for the codebase and is used for version control, branching (`feature` -> `stage` -> `prod`), and Pull Requests.
+    -   **GitHub Copilot PR Review**: Currently configured on GitHub.com to automatically review Pull Requests when opened.
+    -   **GitHub Actions**: *Planned* - Will provide Continuous Integration (CI) by automatically running quality checks (like linting and testing) on every Pull Request before it can be merged into the `stage` branch.
+    -   **Azure App Service (Deployment Center)**: *Planned* - Will provide Continuous Deployment (CD) by monitoring the `stage` and `prod` branches in GitHub. Changes merged to these branches will be automatically deployed to the corresponding environment.
 -   **Data Storage**:
     -   **Azure Cosmos DB**: The application uses Azure Cosmos DB for persistent, scalable data storage across all environments. This provides reliable data persistence and supports automatic scaling based on demand.
+    -   **Azure Key Vault**: Secure credential management for Cosmos DB connection strings and other secrets.
 
 ## Environments
 
-To ensure stability and quality, the project uses two parallel environments: Staging and Production. Each environment is a complete, isolated stack of the necessary Azure resources.
+The project is designed to support multiple environments with proper isolation and deployment strategies.
 
-### Staging Environment
+### Development Environment (Current)
+
+-   **Purpose**: Local development and testing.
+-   **Deployment**: Manual local execution.
+-   **Data Storage**: Azure Cosmos DB with environment-specific containers.
+-   **Authentication**: Azure Key Vault with `az login` authentication.
+
+### Staging Environment (Planned)
 
 -   **Purpose**: To test and validate new features in a production-like environment before they are released to end-users.
--   **Deployment Trigger**: Automatic deployment is triggered upon every merge to the **`stage`** branch.
--   **Azure Resources**:
+-   **Deployment Trigger**: *Planned* - Automatic deployment will be triggered upon every merge to the **`stage`** branch.
+-   **Azure Resources** (Planned):
     -   App Service Plan (Staging)
     -   App Service (Staging)
     -   Application Insights (Staging)
     -   Log Analytics Workspace (Staging)
 
-### Production Environment
+### Production Environment (Planned)
 
 -   **Purpose**: The live application that is used by end-users.
--   **Deployment Trigger**: Automatic deployment is triggered upon every merge to the **`main`** branch (which happens when a PR from `stage` is approved).
--   **Azure Resources**:
+-   **Deployment Trigger**: *Planned* - Automatic deployment will be triggered upon every merge to the **`prod`** branch (which happens when a PR from `stage` is approved).
+-   **Azure Resources** (Planned):
     -   App Service Plan (Production)
     -   App Service (Production)
     -   Application Insights (Production)
@@ -40,7 +49,7 @@ To ensure stability and quality, the project uses two parallel environments: Sta
 
 ## Workflow and Infrastructure Diagram
 
-This diagram illustrates the flow from development planning through to production deployment.
+This diagram illustrates the current and planned flow from development planning through to production deployment.
 
 ```mermaid
 graph TD
@@ -49,40 +58,51 @@ graph TD
         B -- "Creates PBI & Branch" --> C[GitHub];
     end
 
-    subgraph "CI/CD Pipeline"
+    subgraph "Current CI/CD Pipeline"
         A -- "Pushes code to feature branch" --> C;
-        C -- "Opens PR to stage" --> D[GitHub Action CI];
-        D -- "Checks Pass" --> E{Merge to stage};
-        E -- "Automatic Deploy" --> F[Stage App Service];
+        C -- "Opens PR to stage" --> D[GitHub Copilot PR Review];
+        D -- "Review Complete" --> E{Merge to stage};
     end
 
-    subgraph "Staging Environment"
-        F -- "Logs & Metrics" --> G[Stage App Insights / Logs];
+    subgraph "Planned CI/CD Pipeline"
+        E -- "Planned: GitHub Actions CI" --> F[Planned: Stage App Service];
+        F -- "Planned: Logs & Metrics" --> G[Planned: Stage App Insights];
     end
 
-    subgraph "Promotion to Production"
-        H{PR: stage -> main} -- "Manual Approval & Merge" --> I{Merge to main};
-        I -- "Automatic Deploy" --> J[Prod App Service];
+    subgraph "Planned Production"
+        H{Planned: PR stage -> prod} -- "Planned: Manual Approval" --> I{Planned: Merge to prod};
+        I -- "Planned: Automatic Deploy" --> J[Planned: Prod App Service];
+        J -- "Planned: Logs & Metrics" --> K[Planned: Prod App Insights];
     end
 
-    subgraph "Production Environment"
-        J -- "Logs & Metrics" --> K[Prod App Insights / Logs];
-    end
-
-    A -- "Tests & Validates" --> F;
-    L[End User] --> J;
+    A -- "Current: Local Development" --> L[Local Flask Server];
+    L --> M[Azure Cosmos DB];
+    L --> N[Azure Key Vault];
+    
+    style D fill:#e1f5fe
+    style F fill:#fff3e0
+    style G fill:#fff3e0
+    style H fill:#fff3e0
+    style I fill:#fff3e0
+    style J fill:#fff3e0
+    style K fill:#fff3e0
 ```
 
 ## Monitoring & Logging
 
-Each environment has its own dedicated Application Insights and Log Analytics Workspace. This isolation is critical for preventing staging data from interfering with production metrics.
+### Current State
+-   **Local Development**: Basic logging via Python logging module
+-   **Database Health**: Built-in health check endpoint (`/api/health`) for Cosmos DB connection status
 
--   **Application Insights** is our Application Performance Management (APM) tool. It is used to:
+### Planned Monitoring & Logging
+Each environment will have its own dedicated Application Insights and Log Analytics Workspace. This isolation is critical for preventing staging data from interfering with production metrics.
+
+-   **Application Insights** will be our Application Performance Management (APM) tool. It will be used to:
     -   Track application performance (server response times, failure rates, etc.).
     -   Automatically detect and diagnose exceptions and performance issues.
     -   Understand user behavior through telemetry.
 
--   **Log Analytics Workspace** serves as the central repository for all log data. It collects and stores:
+-   **Log Analytics Workspace** will serve as the central repository for all log data. It will collect and store:
     -   All telemetry data from Application Insights.
     -   Infrastructure-level logs from the Azure App Service (e.g., web server logs, deployment logs).
     -   This allows for powerful, cross-cutting queries to troubleshoot complex issues.

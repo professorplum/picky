@@ -7,13 +7,38 @@ import logging
 from typing import Optional
 from .secrets_service import get_secrets_service
 
+
 logger = logging.getLogger(__name__)
+
+
+def resolve_port(arg_port: Optional[int] = None, default: int = 8000) -> int:
+    """
+    Resolve port with consistent precedence order across all entry points.
+    
+    Precedence: --port argument > PORT env var > default
+    
+    Args:
+        arg_port: Port from command-line argument (if provided)
+        default: Default port to use if no other source provides one
+        
+    Returns:
+        The resolved port number
+    """
+    # Best practice: --port argument > PORT env var > default
+    if arg_port is not None:
+        return arg_port
+    
+    port_env = os.environ.get('PORT')
+    if port_env:
+        return int(port_env)
+    
+    return default
 
 
 class Config:
     """Base configuration class with common settings"""
-    # Environment identification
-    ENV_NAME = os.environ.get('ENV_NAME', 'Development')
+    # Environment identification - use ENV (dev|stage|prod)
+    ENV = os.environ.get('ENV', 'dev')
     
     # Server settings
     DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes', 'on')
@@ -53,35 +78,30 @@ class Config:
             # Log the error and set connection to None for graceful handling
             import logging
             logger = logging.getLogger(__name__)
-            logger.error(f"Failed to load Cosmos DB configuration: {e}")
-            
-            # Set to None so the app can detect and handle the error gracefully
-            self.COSMOS_CONNECTION_STRING = None
-            self.COSMOS_DATABASE = None
-            self.COSMOS_CONTAINER = None
+            logger.error(f"SHOWSTOPPER: Failed to load Cosmos DB configuration: {e}")
+            logger.error("SHOWSTOPPER: Cannot start application without Key Vault access")
+            logger.error("SHOWSTOPPER: Exiting to prevent serving broken application")
+            import sys
+            sys.exit(1)
     
     def _get_environment_name(self) -> str:
         """Get environment name for secret lookup"""
-        env_mapping = {
-            'Development': 'dev',
-            'Staging': 'stage', 
-            'Production': 'prod'
-        }
-        return env_mapping.get(self.ENV_NAME, 'dev')
+        # ENV is already in the correct format (dev|stage|prod)
+        return self.ENV
 
 
 class DevelopmentConfig(Config):
     """Development environment configuration"""
-    ENV_NAME = 'Development'
+    ENV = 'dev'
     DEBUG = True
     
     # Specific ports for local development security
-    CORS_ORIGINS = ['http://localhost:5001', 'http://127.0.0.1:5001']
+    CORS_ORIGINS = ['http://localhost:8000', 'http://127.0.0.1:8000']
 
 
 class StagingConfig(Config):
     """Staging environment configuration"""
-    ENV_NAME = 'Staging'
+    ENV = 'stage'
     DEBUG = False
     
     # Restricted CORS for staging
@@ -90,7 +110,7 @@ class StagingConfig(Config):
 
 class ProductionConfig(Config):
     """Production environment configuration"""
-    ENV_NAME = 'Production'
+    ENV = 'prod'
     DEBUG = False
     
     # Production requires explicit CORS configuration
@@ -104,20 +124,20 @@ class ProductionConfig(Config):
 
 # Configuration mapping
 config_map = {
-    'Development': DevelopmentConfig,
-    'Staging': StagingConfig,
-    'Production': ProductionConfig
+    'dev': DevelopmentConfig,
+    'stage': StagingConfig,
+    'prod': ProductionConfig
 }
 
 
 def get_config():
-    """Get the appropriate configuration class based on ENV_NAME"""
-    env_name = os.environ.get('ENV_NAME', 'Development')
-    config_class = config_map.get(env_name, DevelopmentConfig)
+    """Get the appropriate configuration class based on ENV"""
+    env = os.environ.get('ENV', 'dev')
+    config_class = config_map.get(env, DevelopmentConfig)
     
     # Only log config details in development
-    if env_name == 'Development':
-        logger.info(f"🔧 get_config() called with ENV_NAME: {env_name}")
+    if env == 'dev':
+        logger.info(f"🔧 get_config() called with ENV: {env}")
         logger.info(f"🔧 Using config class: {config_class.__name__}")
     
     return config_class

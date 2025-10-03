@@ -6,69 +6,76 @@ This document describes the Cosmos DB schema design for the Picky application, i
 
 ## Container Design
 
-All containers use **flexible `/id` partition key** for maximum adaptability and future schema evolution.
+The application uses a **single container** with **flexible `/id` partition key** for maximum adaptability and future schema evolution. Items are differentiated by a `type` field within the same container.
 
-### Container List
+### Container Configuration
 
 | Container Name | Purpose | Partition Key | Throughput |
 |----------------|---------|---------------|------------|
-| `shopping_items` | Shopping list items | `/id` | Shared (1000 RU/s total) |
-| `larder_items` | Larder/pantry inventory | `/id` | Shared (1000 RU/s total) |
-| `meal_items` | Future meal planning | `/id` | Shared (1000 RU/s total) |
+| `dev-container` | Development environment data | `/id` | 1000 RU/s |
+| `stage-container` | Staging environment data | `/id` | 1000 RU/s |
+| `prod-container` | Production environment data | `/id` | 1000 RU/s |
+
+**Note**: Container names are environment-derived based on the Azure Key Vault configuration. Each environment uses its own container for data isolation.
 
 ## Document Schemas
 
 ### Shopping Items (Shopping List)
 
-**Container:** `shopping_items`
+**Container:** Single container (type: `shopping`)
 
 ```json
 {
   "id": "1759017526823-4567",
   "name": "bananas",
+  "type": "shopping",
   "inCart": false,
   "createdAt": "2025-09-28T23:45:18.216071",
-  "modifiedAt": "2025-09-28T23:45:18.216071",
+  "modifiedAt": "2025-09-28T23:45:18.216071"
 }
 ```
 
 **Fields:**
 - `id` (string, required): Unique identifier (timestamp-random)
 - `name` (string, required): Item name
+- `type` (string, required): Item type (`"shopping"`)
 - `inCart` (boolean): Whether item is in shopping cart
 - `createdAt` (string): ISO timestamp when created
 - `modifiedAt` (string): ISO timestamp when last modified
 
 ### Larder Items (Larder/Pantry)
 
-**Container:** `larder_items`
+**Container:** Single container (type: `larder`)
 
 ```json
 {
   "id": "1759016375267-8901",
   "name": "apples",
+  "type": "larder",
   "reorder": false,
   "createdAt": "2025-09-28T23:45:18.216071",
-  "modifiedAt": "2025-09-28T23:45:18.216071",
+  "modifiedAt": "2025-09-28T23:45:18.216071"
 }
 ```
 
 **Fields:**
 - `id` (string, required): Unique identifier
 - `name` (string, required): Item name
+- `type` (string, required): Item type (`"larder"`)
 - `reorder` (boolean): Whether item needs reordering
 - `createdAt` (string): ISO timestamp when created
 - `modifiedAt` (string): ISO timestamp when last modified
 
-### Meal Items (Future)
+### Meal Items
 
-**Container:** `meal_items`
+**Container:** Single container (type: `meal`)
 
 ```json
 {
-  "id": "meal-12345-6789",
-  "name": "Spaghetti Carbonara",
-  "ingredients": "pasta, eggs, bacon, parmesan",
+  "id": "1759016375267-8901",
+  "name": "Chicken Stir Fry",
+  "type": "meal",
+  "ingredients": "chicken, vegetables, soy sauce",
   "createdAt": "2025-09-28T23:45:18.216071",
   "modifiedAt": "2025-09-28T23:45:18.216071"
 }
@@ -77,9 +84,25 @@ All containers use **flexible `/id` partition key** for maximum adaptability and
 **Fields:**
 - `id` (string, required): Unique identifier
 - `name` (string, required): Meal name
-- `ingredients` (string): Comma-separated ingredients list
+- `type` (string, required): Item type (`"meal"`)
+- `ingredients` (string): List of ingredients
 - `createdAt` (string): ISO timestamp when created
 - `modifiedAt` (string): ISO timestamp when last modified
+
+## Query Patterns
+
+Since all items are stored in a single container, queries use the `type` field to filter items:
+
+```sql
+-- Get all shopping items
+SELECT * FROM c WHERE c.type = "shopping"
+
+-- Get all larder items
+SELECT * FROM c WHERE c.type = "larder"
+
+-- Get all meal items
+SELECT * FROM c WHERE c.type = "meal"
+```
 
 ## ID Generation Strategy
 
@@ -160,35 +183,37 @@ Responses maintain the same JSON structure as the original API, with Cosmos DB m
 
 ## Environment Configuration
 
-### Single Cosmos DB Account Setup
-All environments use the same Cosmos DB account with different databases:
+### Azure Key Vault Configuration
+All environments use Azure Key Vault for secure credential management:
 
-### Local Development (Emulator)
+### Local Development
 ```env
-COSMOS_ENDPOINT=https://localhost:8081
-COSMOS_KEY=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==
-COSMOS_DATABASE=picky-dev
+KEY_VAULT_URL="https://your-keyvault.vault.azure.net/"
+ENV_NAME=Development
 ```
 
-### Azure Development
+The app automatically fetches:
+- `cosmos-connection-string-dev` from Key Vault
+- Uses `dev-container` for data storage
+
+### Azure Staging (Planned)
 ```env
-COSMOS_ENDPOINT=https://your-cosmos-account.documents.azure.com:443/
-COSMOS_KEY=your-primary-key
-COSMOS_DATABASE=picky-dev
+KEY_VAULT_URL="https://your-keyvault.vault.azure.net/"
+ENV_NAME=Staging
 ```
 
-### Azure Staging
+The app will automatically fetch:
+- `cosmos-connection-string-stage` from Key Vault
+- Uses `stage-container` for data storage
+
+### Azure Production (Planned)
 ```env
-COSMOS_ENDPOINT=https://your-cosmos-account.documents.azure.com:443/
-COSMOS_KEY=your-primary-key
-COSMOS_DATABASE=picky-staging
+KEY_VAULT_URL="https://your-keyvault.vault.azure.net/"
+ENV_NAME=Production
 ```
 
-### Azure Production
-```env
-COSMOS_ENDPOINT=https://your-cosmos-account.documents.azure.com:443/
-COSMOS_KEY=your-primary-key
-COSMOS_DATABASE=picky-production
-```
+The app will automatically fetch:
+- `cosmos-connection-string-prod` from Key Vault
+- Uses `prod-container` for data storage
 
-**Note:** All environments share the same Cosmos DB account and 1000 RU/s free tier allocation, but use separate databases for isolation.
+**Note:** All environments share the same Cosmos DB account and 1000 RU/s free tier allocation, but use separate containers for isolation. Credentials are securely managed via Azure Key Vault.

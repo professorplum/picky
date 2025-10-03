@@ -136,6 +136,20 @@ h1 {
 	opacity: 0.6;
 }
 
+.btn-danger {
+	background-color: #ff3b30;
+	color: white;
+}
+
+.btn-danger:hover {
+	background-color: #d70015;
+}
+
+.btn-small {
+	padding: 6px var(--space-sm);
+	font-size: 12px;
+}
+
 /* Dashboard Layout */
 .dashboard {
 	display: flex;

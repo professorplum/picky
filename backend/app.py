@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 import os
 import logging
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -37,21 +38,23 @@ try:
     # Initialize the new database service
     db_connected = initialize_database()
     if db_connected:
-        if app.config.get('ENV_NAME') == 'Development':
+        if app.config.get('ENV') == 'dev':
             logger.info("Successfully initialized Cosmos DB connection with new architecture")
         
         # Initialize the new data layer
         data_layer = DataLayer()
-        if app.config.get('ENV_NAME') == 'Development':
+        if app.config.get('ENV') == 'dev':
             logger.info("Successfully initialized new data layer")
     else:
         logger.error("Failed to initialize Cosmos DB connection")
         data_layer = None
     
 except Exception as e:
-    logger.error(f"Failed to initialize database service: {e}")
-    logger.warning("App will fail gracefully when attempting to use database")
-    data_layer = None
+    logger.error(f"SHOWSTOPPER: Failed to initialize database service: {e}")
+    logger.error("SHOWSTOPPER: Cannot start application without database connection")
+    logger.error("SHOWSTOPPER: Exiting to prevent serving broken application")
+    import sys
+    sys.exit(1)
 
 @app.route('/')
 def index():
@@ -114,8 +117,11 @@ def get_larder_items():
         return error_response
     
     try:
-        items = data_layer.get_larder_items()
-        return jsonify(items)
+        result = data_layer.get_larder_items()
+        if result.get("success"):
+            return jsonify(result["items"])
+        else:
+            return jsonify({"error": result.get("error", "Failed to get larder items")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -135,7 +141,10 @@ def add_larder_item():
             return jsonify({"error": "Item name is required"}), 400
         
         result = data_layer.add_larder_item(item_data)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify(result["item"])
+        else:
+            return jsonify({"error": result.get("error", "Failed to add larder item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -186,8 +195,11 @@ def get_meal_items():
         return error_response
     
     try:
-        items = data_layer.get_meal_items()
-        return jsonify(items)
+        result = data_layer.get_meal_items()
+        if result.get("success"):
+            return jsonify(result["items"])
+        else:
+            return jsonify({"error": result.get("error", "Failed to get meal items")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -207,7 +219,10 @@ def add_meal_item():
             return jsonify({"error": "Meal name is required"}), 400
         
         result = data_layer.add_meal_item(meal_data)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify(result["item"])
+        else:
+            return jsonify({"error": result.get("error", "Failed to add meal item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -224,7 +239,10 @@ def update_larder_item(item_id):
             return jsonify({"error": "Invalid JSON data"}), 400
         
         result = data_layer.update_larder_item(item_id, update_data)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify(result["item"])
+        else:
+            return jsonify({"error": result.get("error", "Failed to update larder item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -240,7 +258,10 @@ def update_shopping_item(item_id):
             return jsonify({"error": "Invalid JSON data"}), 400
         
         result = data_layer.update_shopping_item(item_id, update_data)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify(result["item"])
+        else:
+            return jsonify({"error": result.get("error", "Failed to update shopping item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -256,7 +277,10 @@ def update_meal_item(item_id):
             return jsonify({"error": "Invalid JSON data"}), 400
         
         result = data_layer.update_meal_item(item_id, update_data)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify(result["item"])
+        else:
+            return jsonify({"error": result.get("error", "Failed to update meal item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -269,7 +293,10 @@ def delete_larder_item(item_id):
     
     try:
         result = data_layer.delete_larder_item(item_id)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify({"message": result.get("message", "Larder item deleted successfully")})
+        else:
+            return jsonify({"error": result.get("error", "Failed to delete larder item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -281,7 +308,10 @@ def delete_shopping_item(item_id):
     
     try:
         result = data_layer.delete_shopping_item(item_id)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify({"message": result.get("message", "Shopping item deleted successfully")})
+        else:
+            return jsonify({"error": result.get("error", "Failed to delete shopping item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -293,7 +323,10 @@ def delete_meal_item(item_id):
     
     try:
         result = data_layer.delete_meal_item(item_id)
-        return jsonify(result)
+        if result.get("success"):
+            return jsonify({"message": result.get("message", "Meal item deleted successfully")})
+        else:
+            return jsonify({"error": result.get("error", "Failed to delete meal item")}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -304,9 +337,9 @@ def run_server(port=None, debug=None):
         debug = app.config.get('DEBUG', True)
     
     # Display startup information (only in development)
-    if app.config.get('ENV_NAME') == 'Development':
+    if app.config.get('ENV') == 'dev':
         logger.info("🍽️  Starting Picky...")
-        logger.info(f"🌍 Environment: {app.config.get('ENV_NAME', 'Unknown')}")
+        logger.info(f"🌍 Environment: {app.config.get('ENV', 'Unknown')}")
         
         # Display data storage information
         if data_layer:
@@ -318,11 +351,14 @@ def run_server(port=None, debug=None):
         logger.info(f"Server running at http://localhost:{port}")
         logger.info(f"API available at http://localhost:{port}/api/health")
     
-    host = app.config.get('HOST', '0.0.0.0')
-    app.run(debug=debug, host=host, port=port)
+    app.run(debug=debug, host='0.0.0.0', port=port)
 
 
 if __name__ == "__main__":
-    # Always use PORT env var if set, default to 8000 for Azure compatibility
-    port = int(os.environ.get("PORT", 8000))
+    # Direct execution (e.g., for Azure App Service or manual testing)
+    # Uses PORT env var with fallback to 8000
+    # For local development with args/browser, use: python -m backend.run
+    port_env = os.environ.get('PORT')
+    port = int(port_env) if port_env else 8000
+    
     run_server(port=port, debug=False)
