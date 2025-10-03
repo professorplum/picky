@@ -1,10 +1,11 @@
+if [ -f .env ]; then
+    # Load environment variables from .env if present
+    source .env
+fi
 #!/bin/bash
 # Development server script for Picky Meal Planner
-# Uses PORT=8001 to avoid macOS AirPlay Receiver conflict on port 8000
 
 echo "🍽️  Starting Picky development server..."
-echo "🌐 Server will be available at http://localhost:8001"
-echo "🔧 Development mode with auto-reload enabled"
 echo ""
 
 # Check if virtual environment is activated
@@ -15,5 +16,10 @@ else
     exit 1
 fi
 
-# Start the development server with PORT=8001 and debug mode
-PORT=8001 python -m backend.app
+echo ""
+echo "🌐 Server will be available at http://localhost:${PORT:-8000}"
+echo "🔧 Development mode: DEBUG=${DEBUG:-true} (auto-reload enabled)"
+echo ""
+
+# Start the development server
+python -m backend.app

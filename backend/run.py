@@ -19,14 +19,14 @@ def main():
 
     args = parser.parse_args()
 
-    # Best practice: --port argument > PORT env var > default
-    port = args.port
-    if port is None:
-        port_env = os.environ.get('PORT')
-        if port_env:
-            port = int(port_env)
-        else:
-            port = 5001
+    # Best practice: PORT env var > --port argument > default
+    port_env = os.environ.get('PORT')
+    if port_env:
+        port = int(port_env)
+    elif args.port:
+        port = args.port
+    else:
+        port = 5001
 
     # Only show startup messages in development
     env = os.environ.get('ENV', 'dev')

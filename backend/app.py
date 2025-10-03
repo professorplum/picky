@@ -347,11 +347,10 @@ def run_server(port=None, debug=None):
             logger.warning("Data storage: ERROR - Cosmos DB connection failed")
         
         logger.info(f"Debug mode: {debug}")
-        logger.info(f"Server running at http://localhost:{port}")
-        logger.info(f"API available at http://localhost:{port}/api/health")
+        logger.info(f"Server running at http://0.0.0.0:{port}")
+        logger.info(f"API available at http://0.0.0.0:{port}/api/health")
     
-    host = app.config.get('HOST', '0.0.0.0')
-    app.run(debug=debug, host=host, port=port)
+    app.run(debug=debug, host='0.0.0.0', port=port)
 
 
 if __name__ == "__main__":
