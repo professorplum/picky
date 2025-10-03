@@ -37,7 +37,7 @@ mkdir -p logs
 
 # --- Start Backend ---
 echo "🚀 Starting backend server..."
-python -m backend.run --no-browser >> logs/backend.out.log 2>> logs/backend.err.log &
+python run.py --no-browser >> logs/backend.out.log 2>> logs/backend.err.log &
 BACKEND_PID=$!
 echo "Backend server started with PID: $BACKEND_PID"
 echo "🌐 Backend API will be available at http://localhost:${PORT:-8000}"
