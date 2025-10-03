@@ -7,7 +7,7 @@ name: Build and deploy Python app to Azure Web App - picky-stage-wa
 on:
   push:
     branches:
-      - feature/set-up-stage
+      - stage
   workflow_dispatch:
 
 jobs:
